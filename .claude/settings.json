@@ -1,0 +1,70 @@
+{
+  "project": "digitech-pedagogic-content-os",
+  "version": "1.0.0",
+  "language_primary": "he",
+  "language_system": "en",
+
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(touch:*)",
+      "Bash(cp:*)",
+      "Bash(mv:*)",
+      "Write(*)",
+      "Read(*)"
+    ],
+    "deny": [
+      "Bash(rm -rf:*)",
+      "Bash(curl:*)",
+      "Bash(wget:*)"
+    ]
+  },
+
+  "pipeline_stages": [
+    "INIT",
+    "RESEARCH_DONE",
+    "CURRICULUM_DONE",
+    "SLIDES_DONE",
+    "INTERACTIVE_DONE",
+    "MARKETING_DONE",
+    "READY_FOR_PILOT"
+  ],
+
+  "defaults": {
+    "max_theory_block_minutes": 15,
+    "max_slides_per_8h_course": 24,
+    "min_interactive_elements_per_module": 1,
+    "game_max_stages": 5,
+    "game_duration_minutes_min": 15,
+    "game_duration_minutes_max": 25,
+    "min_test_cases_per_game": 3,
+    "max_test_cases_per_game": 7
+  },
+
+  "audience_bands": ["elementary", "middle_school", "high_school"],
+
+  "supported_durations_hours": [4, 6, 8],
+
+  "required_brief_fields": [
+    "course_slug",
+    "title",
+    "audience_grade",
+    "duration_hours",
+    "final_output",
+    "prerequisites",
+    "constraints",
+    "language",
+    "branding_profile"
+  ],
+
+  "output_categories": [
+    "admin",
+    "research",
+    "curriculum",
+    "slides",
+    "interactive",
+    "marketing",
+    "branding",
+    "export"
+  ]
+}

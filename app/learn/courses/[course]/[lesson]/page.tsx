@@ -1,0 +1,108 @@
+import Link from 'next/link';
+import { notFound, redirect } from 'next/navigation';
+import { ArrowRight } from 'lucide-react';
+import { getLesson } from '@/lib/learn/courses';
+import { renderMarkdownLite } from '@/lib/learn/markdown';
+import { getCurrentUser, hasPremiumAccess } from '@/lib/auth';
+import { getCompletedLessonIds, getCourseWithLessons } from '@/lib/learn/db';
+import VimeoPlayer from '@/components/learn/VimeoPlayer';
+import CourseSidebar from '@/components/learn/CourseSidebar';
+import ResourcesCard from '@/components/learn/ResourcesCard';
+import PrevNextNav from '@/components/learn/PrevNextNav';
+import MarkCompleteButton from '@/components/learn/MarkCompleteButton';
+
+export const dynamic = 'force-dynamic';
+
+export default async function LessonPage({
+  params,
+}: {
+  params: Promise<{ course: string; lesson: string }>;
+}) {
+  const { course: courseSlug, lesson: lessonSlug } = await params;
+  const data = await getLesson(courseSlug, lessonSlug);
+  if (!data) notFound();
+  const { course, lesson, prev, next, lessonId, isPremium } = data;
+
+  if (isPremium) {
+    const auth = await getCurrentUser();
+    if (!auth) redirect(`/login?return=${encodeURIComponent(`/learn/courses/${courseSlug}/${lessonSlug}`)}`);
+    if (!hasPremiumAccess(auth.profile)) {
+      redirect(`/upgrade?return=${encodeURIComponent(`/learn/courses/${courseSlug}/${lessonSlug}`)}`);
+    }
+  }
+
+  const auth = await getCurrentUser();
+  // Resolve completed lesson slugs (CourseSidebar expects slugs, not UUIDs)
+  let completedSlugs: string[] = [];
+  if (auth) {
+    const courseFull = await getCourseWithLessons(courseSlug);
+    if (courseFull) {
+      const completedIds = await getCompletedLessonIds(auth.userId, courseFull.id);
+      const idToSlug = new Map(courseFull.lessons.map((l) => [l.id, l.slug] as const));
+      completedSlugs = completedIds.map((id) => idToSlug.get(id)).filter((s): s is string => !!s);
+    }
+  }
+
+  return (
+    <div className="px-4 sm:px-6 lg:px-10 py-6 lg:py-8 max-w-7xl mx-auto">
+      <div className="flex items-center justify-between gap-3 mb-5">
+        <Link
+          href="/learn/courses"
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-neutral-700 hover:text-brand-purple-700 transition-colors"
+        >
+          <ArrowRight className="w-4 h-4" />
+          חזרה לקורסים
+        </Link>
+      </div>
+
+      <div className="mb-5">
+        <p className="text-xs font-semibold uppercase tracking-wider text-brand-purple-700">{course.title}</p>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-950 mt-1 leading-tight">
+          שיעור {lesson.num} · {lesson.title}
+        </h1>
+      </div>
+
+      <div className="flex flex-col lg:flex-row lg:items-start gap-6">
+        <div className="flex-1 min-w-0 space-y-4">
+          {lesson.vimeoId && (
+            <div className="bg-white rounded-xl border border-neutral-200 p-3 sm:p-4">
+              <VimeoPlayer vimeoId={lesson.vimeoId} title={lesson.title} />
+            </div>
+          )}
+
+          <article className="bg-white rounded-xl border border-neutral-200 p-5 sm:p-6">
+            <header className="flex items-start justify-between gap-3 mb-4 flex-wrap">
+              <h2 className="text-xl font-extrabold text-neutral-950 flex-1 min-w-0">{lesson.title}</h2>
+              {lessonId && (
+                <MarkCompleteButton
+                  courseSlug={course.slug}
+                  lessonSlug={lesson.slug}
+                  lessonId={lessonId}
+                  initialCompleted={completedSlugs.includes(lesson.slug)}
+                />
+              )}
+            </header>
+
+            {lesson.body ? (
+              <div className="prose-learn" dangerouslySetInnerHTML={{ __html: renderMarkdownLite(lesson.body) }} />
+            ) : (
+              <p className="text-neutral-400 italic">אין תוכן טקסטואלי לשיעור זה.</p>
+            )}
+          </article>
+
+          {lesson.resources && lesson.resources.length > 0 && (
+            <ResourcesCard resources={lesson.resources} />
+          )}
+
+          <PrevNextNav courseSlug={course.slug} prev={prev} next={next} />
+        </div>
+
+        <CourseSidebar
+          course={course}
+          activeLessonSlug={lesson.slug}
+          completedLessonSlugs={completedSlugs}
+        />
+      </div>
+    </div>
+  );
+}

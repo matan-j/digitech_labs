@@ -1,0 +1,155 @@
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import { ArrowLeft, ArrowRight, Clock, Lock, Play, Check } from 'lucide-react';
+import { getCourseWithLessons, getCompletedLessonIds } from '@/lib/learn/db';
+import { getCurrentUser, hasPremiumAccess } from '@/lib/auth';
+import { renderMarkdownLite } from '@/lib/learn/markdown';
+
+export const dynamic = 'force-dynamic';
+
+export async function generateMetadata({ params }: { params: Promise<{ course: string }> }) {
+  const { course: slug } = await params;
+  const c = await getCourseWithLessons(slug);
+  return { title: c ? `${c.title} — Digitech Learning Hub` : 'קורס לא נמצא' };
+}
+
+export default async function CourseLanding({ params }: { params: Promise<{ course: string }> }) {
+  const { course: slug } = await params;
+  const course = await getCourseWithLessons(slug);
+  if (!course || course.status !== 'published') notFound();
+
+  const auth = await getCurrentUser();
+  const locked = course.is_premium && (!auth || !hasPremiumAccess(auth.profile));
+
+  const completed = auth ? new Set(await getCompletedLessonIds(auth.userId, course.id)) : new Set<string>();
+  const completedCount = course.lessons.reduce((n, l) => (completed.has(l.id) ? n + 1 : n), 0);
+  const pct = course.lessons.length > 0 ? Math.round((completedCount / course.lessons.length) * 100) : 0;
+
+  const firstIncomplete = course.lessons.find((l) => !completed.has(l.id));
+  const targetLesson = firstIncomplete ?? course.lessons[0];
+
+  return (
+    <div className="px-4 sm:px-6 lg:px-10 py-6 lg:py-8 max-w-5xl mx-auto">
+      <Link
+        href="/learn/courses"
+        className="inline-flex items-center gap-1.5 text-sm text-neutral-500 hover:text-neutral-900 mb-5"
+      >
+        <ArrowRight className="w-3.5 h-3.5" />
+        חזרה לקורסים
+      </Link>
+
+      <header
+        className="rounded-2xl text-white px-6 sm:px-8 py-7 sm:py-8 mb-6 relative overflow-hidden"
+        style={
+          course.cover_url
+            ? { backgroundImage: `linear-gradient(rgba(46,26,92,0.7), rgba(46,26,92,0.85)), url(${course.cover_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+            : { backgroundImage: 'linear-gradient(135deg, #2E1A5C 0%, #4A2E8F 60%, #5B3AAE 100%)' }
+        }
+      >
+        <div className="relative">
+          {course.audience && (
+            <span className="inline-flex items-center text-[11px] font-semibold uppercase tracking-wider text-brand-purple-100 bg-white/10 backdrop-blur-sm px-2 py-1 rounded-pill mb-3">
+              {course.audience}
+            </span>
+          )}
+          <h1 className="text-2xl sm:text-3xl font-extrabold leading-tight">{course.title}</h1>
+          {course.tagline && <p className="mt-2 text-base text-brand-purple-200">{course.tagline}</p>}
+
+          <div className="mt-5 flex items-center gap-4 text-sm text-brand-purple-200">
+            <span className="inline-flex items-center gap-1">
+              <Clock className="w-4 h-4" />
+              {course.lessons.length} שיעורים
+            </span>
+            {auth && course.lessons.length > 0 && (
+              <span className="inline-flex items-center gap-1">
+                <Check className="w-4 h-4" />
+                {completedCount} הושלמו ({pct}%)
+              </span>
+            )}
+            {course.is_premium && (
+              <span className="inline-flex items-center gap-1 text-amber-200">
+                <Lock className="w-3.5 h-3.5" />
+                פרימיום
+              </span>
+            )}
+          </div>
+
+          <div className="mt-6">
+            {targetLesson ? (
+              locked ? (
+                <Link
+                  href={auth ? `/upgrade?return=${encodeURIComponent(`/learn/courses/${slug}`)}` : `/login?return=${encodeURIComponent(`/learn/courses/${slug}`)}`}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-pill bg-white text-brand-purple-800 text-sm font-bold hover:bg-brand-purple-50 transition-colors"
+                >
+                  <Lock className="w-4 h-4" />
+                  {auth ? 'הצטרף למועדון' : 'התחבר כדי לצפות'}
+                </Link>
+              ) : (
+                <Link
+                  href={`/learn/courses/${slug}/${targetLesson.slug}`}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-pill bg-white text-brand-purple-800 text-sm font-bold hover:bg-brand-purple-50 transition-colors"
+                >
+                  <Play className="w-4 h-4" />
+                  {completedCount > 0 ? 'המשך לימוד' : 'התחל קורס'}
+                </Link>
+              )
+            ) : (
+              <p className="text-sm text-brand-purple-200">קורס זה עוד ריק.</p>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {course.description && (
+        <section className="bg-white rounded-2xl border border-neutral-200 p-6 mb-6">
+          <h2 className="text-lg font-extrabold text-neutral-950 mb-3">על הקורס</h2>
+          <div className="prose-learn" dangerouslySetInnerHTML={{ __html: renderMarkdownLite(course.description) }} />
+        </section>
+      )}
+
+      <section className="bg-white rounded-2xl border border-neutral-200 overflow-hidden">
+        <div className="px-6 py-4 border-b border-neutral-200">
+          <h2 className="text-lg font-extrabold text-neutral-950">תוכן הקורס</h2>
+        </div>
+        {course.lessons.length === 0 ? (
+          <div className="p-12 text-center text-neutral-500 text-sm">אין שיעורים בקורס זה.</div>
+        ) : (
+          <ul>
+            {course.lessons.map((l) => {
+              const isDone = completed.has(l.id);
+              const url = locked
+                ? (auth ? `/upgrade?return=${encodeURIComponent(`/learn/courses/${slug}/${l.slug}`)}` : `/login?return=${encodeURIComponent(`/learn/courses/${slug}/${l.slug}`)}`)
+                : `/learn/courses/${slug}/${l.slug}`;
+              return (
+                <li key={l.id} className="border-t border-neutral-100 first:border-t-0">
+                  <Link
+                    href={url}
+                    className="flex items-center gap-3 px-6 py-3.5 hover:bg-neutral-50 transition-colors"
+                  >
+                    <span
+                      className={[
+                        'w-8 h-8 rounded-pill flex items-center justify-center text-xs font-extrabold tabular-nums flex-shrink-0',
+                        isDone ? 'bg-emerald-100 text-emerald-700' : 'bg-neutral-100 text-neutral-500',
+                      ].join(' ')}
+                    >
+                      {isDone ? <Check className="w-4 h-4" /> : l.num}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-neutral-900 text-sm truncate">{l.title}</p>
+                      {l.duration && <p className="text-xs text-neutral-500 mt-0.5">{l.duration}</p>}
+                    </div>
+                    {locked ? (
+                      <Lock className="w-4 h-4 text-neutral-400" />
+                    ) : (
+                      <ArrowLeft className="w-4 h-4 text-neutral-400" />
+                    )}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
+    </div>
+  );
+}

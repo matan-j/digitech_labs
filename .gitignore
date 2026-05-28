@@ -39,3 +39,17 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# internal planning docs (not product source)
+SYSTEM digitech lab/
+
+# generated sample outputs / dev scripts (not part of the deployed app)
+notebooklm-infographic.html
+test-pipeline.ts
+test-research-only.ts
+
+# claude-code local-machine settings (keep settings.json shared)
+.claude/settings.local.json
+
+# supabase CLI cache (contains DB pooler URL with credentials — must never be committed)
+supabase/.temp/
