@@ -4,6 +4,7 @@ import { listCourses } from '@/lib/learn/courses';
 import CourseCard from '@/components/learn/CourseCard';
 import { getCurrentUser } from '@/lib/auth';
 import { getCompletedLessonIds, listContent, listPlaybooks } from '@/lib/learn/db';
+import { getBrandCoverUrl } from '@/lib/brand';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,11 +16,12 @@ function firstNameFromEmail(email: string): string {
 
 export default async function LearnDashboard() {
   const auth = await getCurrentUser();
-  const [courses, completed, guides, playbooks] = await Promise.all([
+  const [courses, completed, guides, playbooks, coverUrl] = await Promise.all([
     listCourses(),
     auth ? getCompletedLessonIds(auth.userId) : Promise.resolve([] as string[]),
     listContent('guide'),
     listPlaybooks(),
+    getBrandCoverUrl(),
   ]);
   const publishedGuides = guides.filter((g) => g.status === 'published');
   const displayName = auth?.profile.full_name ?? (auth?.email ? firstNameFromEmail(auth.email) : '');
@@ -32,11 +34,14 @@ export default async function LearnDashboard() {
       <section
         className="relative overflow-hidden rounded-panel text-white px-7 sm:px-10 py-10 sm:py-12 mb-8 sm:mb-10"
         style={{
-          backgroundImage:
-            'linear-gradient(135deg, #2E1758 0%, #4B2A84 55%, #5B35A0 100%)',
+          backgroundImage: coverUrl
+            ? `linear-gradient(135deg, rgba(46,23,88,0.85) 0%, rgba(75,42,132,0.78) 55%, rgba(91,53,160,0.72) 100%), url(${coverUrl})`
+            : 'linear-gradient(135deg, #2E1758 0%, #4B2A84 55%, #5B35A0 100%)',
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
         }}
       >
-        {/* subtle radial pattern */}
+        {/* subtle radial pattern (kept even with cover for depth) */}
         <div
           aria-hidden
           className="absolute inset-0 pointer-events-none"

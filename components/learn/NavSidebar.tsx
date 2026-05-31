@@ -2,8 +2,15 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, BookOpen, Compass, BookText, ShieldCheck, LogOut } from 'lucide-react';
+import {
+  Home, BookOpen, Compass, BookText, ShieldCheck, LogOut,
+} from 'lucide-react';
 import type { AuthState } from '@/lib/auth';
+import type { BrandSettings, SocialKey } from '@/lib/brand';
+import {
+  InstagramIcon, FacebookIcon, LinkedinIcon, YoutubeIcon,
+  TiktokIcon, XIcon, WebsiteIcon,
+} from '@/components/icons/social';
 
 type NavItem = {
   label: string;
@@ -18,14 +25,38 @@ const TOP: NavItem[] = [
   { label: 'פלייבוקים', href: '/learn/playbooks', icon: BookText },
 ];
 
+const SOCIAL_ICONS: Record<SocialKey, React.ComponentType<{ className?: string }>> = {
+  instagram: InstagramIcon,
+  facebook: FacebookIcon,
+  linkedin: LinkedinIcon,
+  youtube: YoutubeIcon,
+  tiktok: TiktokIcon,
+  x: XIcon,
+  website: WebsiteIcon,
+};
+
+const SOCIAL_LABELS: Record<SocialKey, string> = {
+  instagram: 'Instagram',
+  facebook: 'Facebook',
+  linkedin: 'LinkedIn',
+  youtube: 'YouTube',
+  tiktok: 'TikTok',
+  x: 'X (Twitter)',
+  website: 'אתר חיצוני',
+};
+
+const SOCIAL_ORDER: SocialKey[] = ['instagram', 'facebook', 'linkedin', 'youtube', 'tiktok', 'x', 'website'];
+
 export default function NavSidebar({
   auth,
-  logoUrl,
+  brand,
 }: {
   auth: AuthState | null;
-  logoUrl: string | null;
+  brand: BrandSettings;
 }) {
   const pathname = usePathname();
+  const { logoUrl, social } = brand;
+  const activeSocial = SOCIAL_ORDER.filter((k) => Boolean(social[k]));
   const hasAccess = auth?.profile.role === 'admin' || auth?.profile.subscription_status === 'active';
   const roleLabel = !auth
     ? null
@@ -49,11 +80,7 @@ export default function NavSidebar({
         <Link href="/learn" className="flex items-center gap-2.5 group">
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={logoUrl}
-              alt="Digitech"
-              className="h-9 w-9 rounded-pill object-cover bg-white"
-            />
+            <img src={logoUrl} alt="Digitech" className="h-9 w-9 rounded-pill object-cover bg-white" />
           ) : (
             <div className="w-9 h-9 rounded-pill bg-brand-purple-700 flex items-center justify-center text-white font-bold text-sm">
               D
@@ -75,7 +102,6 @@ export default function NavSidebar({
               pathname === item.href ||
               (item.href !== '/learn' && pathname.startsWith(item.href)) ||
               (item.href === '/learn' && pathname === '/learn');
-
             return (
               <li key={item.href}>
                 <Link
@@ -123,6 +149,28 @@ export default function NavSidebar({
           )}
         </ul>
       </nav>
+
+      {/* Social icon row */}
+      {activeSocial.length > 0 && (
+        <div className="px-5 py-3 border-t border-brand-purple-200 flex items-center justify-center gap-1.5">
+          {activeSocial.map((k) => {
+            const Icon = SOCIAL_ICONS[k];
+            return (
+              <a
+                key={k}
+                href={social[k]!}
+                target="_blank"
+                rel="noopener noreferrer"
+                aria-label={SOCIAL_LABELS[k]}
+                title={SOCIAL_LABELS[k]}
+                className="w-8 h-8 rounded-pill flex items-center justify-center text-neutral-500 hover:text-brand-purple-700 hover:bg-brand-purple-50 transition-colors"
+              >
+                <Icon className="w-4 h-4" />
+              </a>
+            );
+          })}
+        </div>
+      )}
 
       {/* Bottom user / auth block */}
       <div className="px-3 py-4 border-t border-brand-purple-200 space-y-2">

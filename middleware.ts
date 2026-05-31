@@ -4,12 +4,24 @@ import { updateSession } from './lib/supabase/middleware';
 const ADMIN_PREFIXES = ['/admin', '/learn-admin'];
 const AUTH_REQUIRED_PREFIXES = ['/account', '/upgrade/success'];
 
+// Paths under /admin that must remain publicly accessible (no auth) so the
+// admin login flow itself can render. Anything else under /admin is gated.
+const ADMIN_PUBLIC_PATHS = new Set<string>(['/admin/login']);
+
+function isAdminPath(pathname: string): boolean {
+  return ADMIN_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + '/'));
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const { response, supabase } = await updateSession(request);
 
-  const requiresAuth = AUTH_REQUIRED_PREFIXES.some((p) => pathname.startsWith(p))
-    || ADMIN_PREFIXES.some((p) => pathname.startsWith(p));
+  // /admin/login is reachable without auth — otherwise the form could never render.
+  if (ADMIN_PUBLIC_PATHS.has(pathname)) return response;
+
+  const isAdmin = isAdminPath(pathname);
+  const requiresAuth =
+    isAdmin || AUTH_REQUIRED_PREFIXES.some((p) => pathname.startsWith(p));
 
   if (!requiresAuth) return response;
 
@@ -17,13 +29,14 @@ export async function middleware(request: NextRequest) {
 
   if (!user) {
     const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = '/login';
+    // Admin paths get their own dedicated login screen; everything else uses /login.
+    loginUrl.pathname = isAdmin ? '/admin/login' : '/login';
     loginUrl.search = `?return=${encodeURIComponent(pathname)}`;
     return NextResponse.redirect(loginUrl);
   }
 
-  // Admin route guard
-  if (ADMIN_PREFIXES.some((p) => pathname.startsWith(p))) {
+  // Admin route guard — authenticated but not an admin -> back to learner area.
+  if (isAdmin) {
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')

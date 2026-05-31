@@ -1,18 +1,18 @@
 import NavSidebar from '@/components/learn/NavSidebar';
 import MobileTopBar from '@/components/learn/MobileTopBar';
 import { getCurrentUser } from '@/lib/auth';
-import { getBrandLogoUrl } from '@/lib/brand';
+import { getBrandSettings } from '@/lib/brand';
 
 export default async function LearnLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [auth, logoUrl] = await Promise.all([getCurrentUser(), getBrandLogoUrl()]);
+  const [auth, brand] = await Promise.all([getCurrentUser(), getBrandSettings()]);
   return (
     <div className="min-h-screen bg-brand-purple-50">
-      <NavSidebar auth={auth} logoUrl={logoUrl} />
-      <MobileTopBar auth={auth} logoUrl={logoUrl} />
+      <NavSidebar auth={auth} brand={brand} />
+      <MobileTopBar auth={auth} logoUrl={brand.logoUrl} />
       <main className="lg:mr-64 pt-14 lg:pt-0 min-h-screen">
         {children}
       </main>
