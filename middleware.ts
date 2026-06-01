@@ -32,7 +32,7 @@ export async function middleware(request: NextRequest) {
     // Admin paths get their own dedicated login screen; everything else uses /login.
     loginUrl.pathname = isAdmin ? '/admin/login' : '/login';
     loginUrl.search = `?return=${encodeURIComponent(pathname)}`;
-    return NextResponse.redirect(loginUrl);
+    return redirectWithSessionCookies(loginUrl, response);
   }
 
   // Admin route guard — authenticated but not an admin -> back to learner area.
@@ -47,11 +47,26 @@ export async function middleware(request: NextRequest) {
       const homeUrl = request.nextUrl.clone();
       homeUrl.pathname = '/learn';
       homeUrl.search = '';
-      return NextResponse.redirect(homeUrl);
+      return redirectWithSessionCookies(homeUrl, response);
     }
   }
 
   return response;
+}
+
+/**
+ * Issue a redirect that carries forward any refreshed Supabase auth cookies
+ * from the upstream response. Without this, the freshly-rotated session
+ * cookies that `updateSession` set on `response` get dropped on the redirect
+ * and the user appears logged out on the next request — the exact symptom
+ * documented in Supabase's Next.js SSR guide.
+ */
+function redirectWithSessionCookies(url: URL, sourceResponse: NextResponse): NextResponse {
+  const redirectResponse = NextResponse.redirect(url);
+  sourceResponse.cookies.getAll().forEach((cookie) => {
+    redirectResponse.cookies.set(cookie);
+  });
+  return redirectResponse;
 }
 
 export const config = {
