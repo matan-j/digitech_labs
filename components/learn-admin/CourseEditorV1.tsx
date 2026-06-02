@@ -1,8 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Trash2, ExternalLink, Plus } from 'lucide-react';
+import { Trash2, ExternalLink, Plus, FileSpreadsheet } from 'lucide-react';
 import FileUpload from './FileUpload';
 import SaveIndicator, { type SaveState } from './SaveIndicator';
 import GeneratePlaybookButton from './GeneratePlaybookButton';
@@ -188,6 +189,14 @@ export default function CourseEditorV1({ initial }: Props) {
           </label>
 
           <GeneratePlaybookButton mode="course" courseId={initial.id} courseSlug={initial.slug} />
+
+          <Link
+            href={`/admin/courses/${initial.slug}/bulk-import`}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-pill border border-neutral-300 text-xs font-semibold text-neutral-700 hover:border-brand-purple-400 hover:text-brand-purple-700 transition-colors"
+          >
+            <FileSpreadsheet className="w-3.5 h-3.5" />
+            ייבוא מקובץ
+          </Link>
 
           <button
             type="button"
