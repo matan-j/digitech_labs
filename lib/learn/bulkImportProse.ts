@@ -1,5 +1,5 @@
 import { parseVimeoInput } from './vimeo';
-import { slugify, type ParsedLesson, type RowError, type ParseResult } from './bulkImport';
+import { slugify, uniqueSlug, type ParsedLesson, type RowError, type ParseResult } from './bulkImport';
 
 /**
  * Parse a prose document (.docx / .pdf extracted to plain text) into lessons.
@@ -151,7 +151,7 @@ export function parseProseDocument(
 
   const valid: ParsedLesson[] = [];
   const errors: RowError[] = [];
-  const seenSlugs = new Map<string, number>();
+  const seenSlugs = new Set<string>();
 
   for (let a = 0; a < anchors.length; a++) {
     const anchor = anchors[a];
@@ -197,18 +197,8 @@ export function parseProseDocument(
     const body = bodyLines.join('\n').trim() || null;
 
     const num = a + 1;
-    const slug = slugify(titleHit.title, num);
-
-    const earlierRow = seenSlugs.get(slug);
-    if (earlierRow !== undefined) {
-      errors.push({
-        rowIndex: displayRow,
-        title: titleHit.title,
-        message: `שיעור ${displayRow}: slug "${slug}" כבר שימש בשיעור ${earlierRow}`,
-      });
-      continue;
-    }
-    seenSlugs.set(slug, displayRow);
+    const base = slugify(titleHit.title, num);
+    const slug = uniqueSlug(base, seenSlugs); // auto-disambiguate same-title sections
 
     valid.push({
       rowIndex: displayRow,

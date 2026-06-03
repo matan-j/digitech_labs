@@ -98,6 +98,23 @@ function isRowEmpty(row: RawRow): boolean {
   return Object.values(row).every(isEmpty);
 }
 
+/**
+ * If `base` is already in `seen`, append -2, -3, ... until unique. Same-title
+ * lessons (e.g. multiple "פייסבוק" sections) get auto-disambiguated rather
+ * than rejected — admin can see the result in the preview before committing.
+ */
+export function uniqueSlug(base: string, seen: Set<string>): string {
+  if (!seen.has(base)) {
+    seen.add(base);
+    return base;
+  }
+  let n = 2;
+  while (seen.has(`${base}-${n}`)) n++;
+  const out = `${base}-${n}`;
+  seen.add(out);
+  return out;
+}
+
 export function slugify(title: string, fallbackNum: number): string {
   const transliterated = title
     .split('')
@@ -133,7 +150,7 @@ function parseIntStrict(v: unknown): number | null {
 export function validateRows(rows: RawRow[]): ParseResult {
   const valid: ParsedLesson[] = [];
   const errors: RowError[] = [];
-  const seenSlugs = new Map<string, number>(); // slug → first row that used it
+  const seenSlugs = new Set<string>();
 
   rows.forEach((row, idx) => {
     if (isRowEmpty(row)) return; // skip blank rows silently
@@ -164,18 +181,8 @@ export function validateRows(rows: RawRow[]): ParseResult {
     const num = explicitNum ?? (idx + 1);
 
     const slugRaw = asString(row.slug);
-    const slug = slugRaw ? slugify(slugRaw, num) : slugify(title, num);
-
-    const earlierRow = seenSlugs.get(slug);
-    if (earlierRow !== undefined) {
-      errors.push({
-        rowIndex: sheetRowIndex,
-        title,
-        message: `שורה ${sheetRowIndex}: slug "${slug}" כבר שימש בשורה ${earlierRow}`,
-      });
-      return;
-    }
-    seenSlugs.set(slug, sheetRowIndex);
+    const base = slugRaw ? slugify(slugRaw, num) : slugify(title, num);
+    const slug = uniqueSlug(base, seenSlugs); // auto-append -2, -3 if same title repeats
 
     valid.push({
       rowIndex: sheetRowIndex,
