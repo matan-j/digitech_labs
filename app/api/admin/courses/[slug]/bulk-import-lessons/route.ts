@@ -115,19 +115,16 @@ export async function POST(
     const buf = Buffer.from(await file.arrayBuffer());
     if (format === 'docx') {
       const mammoth = (await import('mammoth')).default;
-      const result = await mammoth.extractRawText({ buffer: buf });
-      if (wantsDebug) rawExtractedText = result.value;
-      parsed = parseProseDocument(result.value, debugBag);
+      // convertToHtml preserves <a href> hyperlinks (extractRawText drops them).
+      const html = (await mammoth.convertToHtml({ buffer: buf })).value;
+      const text = htmlToTextWithLinks(html);
+      if (wantsDebug) rawExtractedText = text;
+      parsed = parseProseDocument(text, debugBag);
     } else if (format === 'pdf') {
-      const { PDFParse } = await import('pdf-parse');
-      const parser = new PDFParse({ data: new Uint8Array(buf) });
-      try {
-        const result = await parser.getText();
-        if (wantsDebug) rawExtractedText = result.text;
-        parsed = parseProseDocument(result.text, debugBag);
-      } finally {
-        await parser.destroy();
-      }
+      const pdfParse = (await import('pdf-parse')).default;
+      const result = await pdfParse(buf);
+      if (wantsDebug) rawExtractedText = result.text;
+      parsed = parseProseDocument(result.text, debugBag);
     } else {
       // xlsx or csv (default if format unknown but mime is accepted)
       const wb = XLSX.read(buf, { type: 'buffer', codepage: 65001 });
@@ -250,4 +247,53 @@ export async function POST(
     updated: writeErrors.length === 0 ? updated : 0,
     writeErrors,
   });
+}
+
+/**
+ * Convert mammoth HTML output to plain text while preserving Vimeo URLs that
+ * Word stored as hyperlinks. The prose parser expects each Vimeo URL to appear
+ * on its own line, so we inject `\nURL\n` right after the link's visible text.
+ */
+function htmlToTextWithLinks(html: string): string {
+  let out = html;
+
+  // Standalone-link paragraph: <p>{maybe wrappers}<a href="vimeo">x</a>{maybe wrappers}</p>
+  // → replace the whole <p> with just <p>URL</p>. This drops generic visible text
+  // like "צפה בסרטון" / "לחצו כאן" so it can't be mistaken for the lesson title.
+  out = out.replace(
+    /<p\b[^>]*>(?:\s|<(?:strong|em|b|i|span|u)\b[^>]*>|<\/(?:strong|em|b|i|span|u)>)*<a\b[^>]*\bhref="(https?:\/\/(?:www\.)?(?:vimeo\.com|player\.vimeo\.com)\/[^"]+)"[^>]*>[\s\S]*?<\/a>(?:\s|<(?:strong|em|b|i|span|u)\b[^>]*>|<\/(?:strong|em|b|i|span|u)>)*<\/p>/gi,
+    (_m, url: string) => `<p>${url}</p>`
+  );
+
+  // Remaining inline <a href="vimeo">TEXT</a> (text + link mixed in same paragraph)
+  // — keep the visible text AND inject the URL after it
+  out = out.replace(
+    /<a\b[^>]*\bhref="(https?:\/\/(?:www\.)?(?:vimeo\.com|player\.vimeo\.com)\/[^"]+)"[^>]*>([\s\S]*?)<\/a>/gi,
+    (_m, url: string, inner: string) => `${stripTags(inner)}\n${url}\n`
+  );
+
+  // Non-Vimeo <a> tags — keep visible text only
+  out = out.replace(/<a\b[^>]*>([\s\S]*?)<\/a>/gi, (_m, inner: string) => stripTags(inner));
+
+  // Block-level tags → newline boundaries
+  out = out.replace(/<\/(p|div|h[1-6]|li|tr)>/gi, '\n');
+  out = out.replace(/<br\s*\/?>/gi, '\n');
+
+  // Strip remaining tags
+  out = out.replace(/<[^>]+>/g, '');
+
+  // Decode common HTML entities
+  out = out
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+
+  return out;
+}
+
+function stripTags(html: string): string {
+  return html.replace(/<[^>]+>/g, '').trim();
 }
