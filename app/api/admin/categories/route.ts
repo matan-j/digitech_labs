@@ -1,0 +1,72 @@
+import { NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/auth';
+import { createClient } from '@/lib/supabase/server';
+import { DOMAIN_IDS, isDomainId } from '@/lib/learn/domains';
+
+function slugify(input: string): string {
+  return input
+    .normalize('NFKD')
+    .toLowerCase()
+    .replace(/[֐-׿]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
+}
+
+export async function GET() {
+  await requireAdmin();
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from('categories')
+    .select('*')
+    .order('domain', { ascending: true })
+    .order('sort_order', { ascending: true })
+    .order('name', { ascending: true });
+  if (error) {
+    return NextResponse.json({ error: 'fetch_failed', message: error.message }, { status: 500 });
+  }
+  return NextResponse.json({ items: data ?? [] });
+}
+
+export async function POST(request: Request) {
+  await requireAdmin();
+  const body = await request.json().catch(() => ({}));
+  const name = (body.name ?? '').toString().trim();
+  const domain = (body.domain ?? '').toString().trim();
+  if (!name) return NextResponse.json({ error: 'name_required' }, { status: 400 });
+  if (!isDomainId(domain)) {
+    return NextResponse.json({ error: 'invalid_domain', allowed: DOMAIN_IDS }, { status: 400 });
+  }
+
+  let slug = (body.slug ?? '').toString().trim() || slugify(name) || `cat-${Date.now()}`;
+
+  const supabase = await createClient();
+
+  // De-dup slug
+  let candidate = slug;
+  for (let n = 2; n < 50; n++) {
+    const { count } = await supabase
+      .from('categories')
+      .select('id', { count: 'exact', head: true })
+      .eq('slug', candidate);
+    if ((count ?? 0) === 0) break;
+    candidate = `${slug}-${n}`;
+  }
+  slug = candidate;
+
+  const { data, error } = await supabase
+    .from('categories')
+    .insert({
+      slug,
+      name,
+      domain,
+      description: body.description ?? null,
+      sort_order: typeof body.sort_order === 'number' ? body.sort_order : 0,
+    })
+    .select('*')
+    .single();
+  if (error) {
+    return NextResponse.json({ error: 'create_failed', message: error.message }, { status: 500 });
+  }
+  return NextResponse.json({ item: data });
+}

@@ -41,6 +41,10 @@ export type Course = {
 export type ContentType = 'course' | 'guide';
 export type ContentStatus = 'draft' | 'published';
 
+/** Guide content type — how the guide body is delivered. */
+export type GuideContentKind = 'youtube' | 'vimeo' | 'pdf' | 'link' | 'article';
+export const GUIDE_CONTENT_KINDS: GuideContentKind[] = ['youtube', 'vimeo', 'pdf', 'link', 'article'];
+
 export type DbResource = {
   id: string;
   owner_type: 'lesson' | 'content_item';
@@ -105,6 +109,10 @@ export type GuideBlock =
   | { type: 'video'; vimeoId?: string; youtubeId?: string; caption?: string }
   | { type: 'callout'; tone?: 'info' | 'success' | 'warning'; content: string };
 
+import type { DomainId, Category } from './domains';
+
+export type CategoryRef = Pick<Category, 'id' | 'slug' | 'name' | 'domain'>;
+
 export type ContentItem = {
   id: string;
   type: ContentType;
@@ -123,6 +131,108 @@ export type ContentItem = {
   published_at: string | null;
   created_at: string;
   updated_at: string;
+  /** YouTube/Vimeo full URL — optional headline video for the item. */
+  video_url: string | null;
+  /** Fixed-enum top-level classifier. NULL means unclassified. */
+  domain: DomainId | null;
+  /** Categories joined via content_item_categories. Empty array if none. */
+  categories?: CategoryRef[];
+  // ----- Creator Hub additions (guides) -----
+  /** Owning creator (null for legacy/admin-only content). */
+  creator_id: string | null;
+  /** How a guide delivers its content. NULL → treated as 'article'. */
+  content_kind: GuideContentKind | null;
+  /** The primary content URL for youtube/vimeo/pdf/link kinds. */
+  content_url: string | null;
+  /** Estimated reading/watching time in minutes. */
+  duration_minutes: number | null;
+  /** Admin-controlled: surfaces the guide in the Featured section. */
+  is_featured: boolean;
+  seo_title: string | null;
+  seo_description: string | null;
+  og_image_url: string | null;
+  updated_by: string | null;
+  /** Joined creator summary (when fetched with creator). */
+  creator?: CreatorRef | null;
+};
+
+// ============================================================
+// Creator Hub types
+// ============================================================
+
+export type CreatorStatus = 'active' | 'disabled';
+
+export type Creator = {
+  id: string;
+  slug: string;
+  name: string;
+  avatar_url: string | null;
+  banner_url: string | null;
+  bio: string | null;
+  role_title: string | null;
+  /** Optional "Meet the Creator" intro video URL (YouTube/Vimeo/video). */
+  intro_video_url: string | null;
+  website: string | null;
+  linkedin: string | null;
+  instagram: string | null;
+  youtube: string | null;
+  tiktok: string | null;
+  /** Public-facing email shown on the creator profile. */
+  email: string | null;
+  /** Internal support/contact email (not necessarily public). */
+  contact_email: string | null;
+  user_id: string | null;
+  status: CreatorStatus;
+  is_featured: boolean;
+  sort_order: number;
+  seo_title: string | null;
+  seo_description: string | null;
+  og_image_url: string | null;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
+/** Lightweight creator summary embedded on guide/playlist cards. */
+export type CreatorRef = Pick<
+  Creator,
+  'id' | 'slug' | 'name' | 'avatar_url' | 'role_title' | 'website' | 'linkedin' | 'instagram' | 'youtube' | 'tiktok' | 'email'
+>;
+
+export type Playlist = {
+  id: string;
+  creator_id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  thumbnail_url: string | null;
+  domain: DomainId | null;
+  status: ContentStatus;
+  is_featured: boolean;
+  sort_order: number;
+  seo_title: string | null;
+  seo_description: string | null;
+  og_image_url: string | null;
+  published_at: string | null;
+  created_by: string | null;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+  creator?: CreatorRef | null;
+};
+
+export type PlaylistItem = {
+  playlist_id: string;
+  content_item_id: string;
+  sort_order: number;
+};
+
+/** Aggregate counts shown on creator cards / dashboards. */
+export type CreatorStats = {
+  guides: number;
+  playlists: number;
+  views: number;
 };
 
 /** @deprecated use CourseWithModules for new code; this stays for legacy callers (bulk-import, playbooks, courses.ts shim). */
@@ -147,11 +257,24 @@ export type Playbook = {
   id: string;
   source_type: PlaybookSourceType;
   source_id: string | null;
+  slug: string | null;
   title: string;
+  tagline: string | null;
+  description: string | null;
   html_content: string;
   audience: string | null;
+  cover_url: string | null;
+  cover_style: 'hero' | 'header' | null;
+  video_url: string | null;
+  domain: DomainId | null;
+  tags: string[];
+  status: ContentStatus;
+  is_premium: boolean;
+  published_at: string | null;
   created_by: string | null;
   created_at: string;
+  updated_at: string | null;
+  categories?: CategoryRef[];
 };
 
 export type Progress = {

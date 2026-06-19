@@ -1,21 +1,41 @@
 @import "tailwindcss";
 
+/* ============================================================================
+   DigiTech HUB — Design Tokens
+   Canonical source. Never hardcode hexes that are defined here.
+   See BRAND.md for usage rules.
+   ============================================================================ */
+
 @theme {
-  /* ========== PRIMARY — Purple Scale (Digitech canonical) ========== */
-  /* Calibrated to spec V1: deep, premium, calm. Use 700 as the primary brand. */
-  --color-brand-purple-50:  #FAF9FD;  /* page bg (--bg-main)            */
-  --color-brand-purple-100: #F3EEFF;  /* soft accent (--brand-soft)     */
-  --color-brand-purple-200: #E9E2F3;  /* border soft (--border-soft)    */
+  /* ========== PRIMARY — Purple Scale (DigiTech HUB) ==========
+     Deep, calm, premium. 700 is the default brand. 900 is the sidebar /
+     hero base. 50–100 are tinted light fills. */
+  --color-brand-purple-50:  #F3EEFF;
+  --color-brand-purple-100: #E8E0FB;
+  --color-brand-purple-200: #E1DDEF;
   --color-brand-purple-300: #C4B8E6;
   --color-brand-purple-400: #9B85D4;
-  --color-brand-purple-500: #7A5FBF;
-  --color-brand-purple-600: #5B35A0;  /* primary hover                  */
-  --color-brand-purple-700: #4B2A84;  /* primary brand                  */
-  --color-brand-purple-800: #3D2678;
-  --color-brand-purple-900: #2E1758;  /* primary dark                   */
-  --color-brand-purple-950: #1A0F3D;
+  --color-brand-purple-500: #6B3FE0;  /* links, focus, secondary accent */
+  --color-brand-purple-600: #5C3BA0;  /* primary hover */
+  --color-brand-purple-700: #4B2E83;  /* PRIMARY BRAND */
+  --color-brand-purple-800: #3F2A78;
+  --color-brand-purple-900: #2E1A5C;  /* sidebar / hero base */
+  --color-brand-purple-950: #1A0F3D;  /* deepest */
 
-  /* ========== SECONDARY — Tech Blue (used sparingly inside CMS) ========== */
+  /* ========== ACCENT — Teal (DigiTech wing-mark accent only) ==========
+     Brand-mark accent. The bridge between the logo's purple→teal gradient
+     and the product's mint progress signal. NOT a primary UI action color. */
+  --color-brand-teal:        #2BA8C9;
+  --color-brand-teal-bright: #4CBCDC;
+
+  /* ========== SIGNAL — Mint (progress / live / success) ==========
+     RESERVED for momentum signals: progress bars, completion checks,
+     LIVE pulse, success states. Never decorative. */
+  --color-signal:        #1FB58A;
+  --color-signal-bright: #46D2AE;
+  --color-signal-50:     #E4F7F1;
+
+  /* ========== Secondary purples (back-compat for legacy components) ========== */
   --color-brand-blue-100: #DCE7FF;
   --color-brand-blue-400: #7AA0FF;
   --color-brand-blue-500: #4A7AFF;
@@ -23,74 +43,156 @@
   --color-brand-blue-700: #1E4FD6;
   --color-brand-blue-900: #0A2F7D;
 
-  /* ========== ACCENT — Teal (success / completion only) ========== */
-  --color-brand-accent:       #19C2A0;
-  --color-brand-accent-soft:  #E8FFF9;
+  /* ========== Accents — gold + danger ========== */
+  --color-gold:    #E0982E;
+  --color-gold-50: #FBF1DF;
 
-  /* ========== NEUTRAL — cool grayscale (slight purple tint) ========== */
+  --color-brand-accent:      #1FB58A;  /* alias: success / completion */
+  --color-brand-accent-soft: #E4F7F1;
+
+  /* ========== NEUTRAL — cool grayscale, faint purple tint ========== */
   --color-neutral-0:   #FFFFFF;
-  --color-neutral-100: #F4F2F8;
-  --color-neutral-200: #E9E2F3;  /* aligned to --border-soft           */
-  --color-neutral-300: #C8C4D4;
-  --color-neutral-500: #6E6780;  /* text muted                         */
-  --color-neutral-600: #4B455D;  /* text secondary                     */
-  --color-neutral-700: #3D3459;
-  --color-neutral-900: #1A1333;
-  --color-neutral-950: #171325;  /* text main                          */
+  --color-neutral-100: #FAF9FE;
+  --color-neutral-200: #ECE9F5;  /* hairline card borders */
+  --color-neutral-300: #E1DDEF;  /* 1.5px input/control borders */
+  --color-neutral-400: #C4BFD4;
+  --color-neutral-500: #928CA6;  /* meta, placeholders */
+  --color-neutral-600: #6E6780;
+  --color-neutral-700: #5B5572;  /* body / secondary */
+  --color-neutral-800: #3D3459;
+  --color-neutral-900: #2A2440;
+  --color-neutral-950: #1C1430;  /* primary text & headings */
 
   /* ========== BG semantic aliases ========== */
-  --color-bg-main:   #FAF9FD;
+  --color-bg-main:   #F7F6FB;  /* page background — lavender white, never pure white */
   --color-bg-card:   #FFFFFF;
-  --color-bg-muted:  #F5F1FB;
+  --color-bg-muted:  #F3EEFF;
+  --color-bg-tint:   #F3EEFF;
 
   /* ========== SEMANTIC ========== */
-  --color-success: #19C2A0;  /* aligned to brand accent */
-  --color-danger:  #EF4444;
+  --color-success: #1FB58A;
+  --color-danger:  #E0567B;
 
   /* ========== RADIUS ========== */
   --radius-sm:    6px;
   --radius-md:    10px;
+  --radius-input: 14px;   /* search, text fields */
   --radius-lg:    16px;
-  --radius-card:  22px;
+  --radius-card:  20px;
   --radius-xl:    24px;
-  --radius-panel: 28px;
-  --radius-pill:  999px;
+  --radius-panel: 28px;   /* Hero / large panels */
+  --radius-pill:  999px;  /* buttons, chips, pills, avatars */
+
+  /* ========== FONT FAMILIES ========== */
+  --font-sans: var(--font-rubik), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-numbers: var(--font-space-grotesk), var(--font-rubik), ui-monospace, monospace;
 }
 
 :root {
   --background: var(--color-bg-main);
   --foreground: var(--color-neutral-950);
 
-  /* Shadow tokens — applied via style or arbitrary class */
-  --shadow-soft: 0 12px 32px rgba(46, 23, 88, 0.06);
-  --shadow-card: 0 8px 24px rgba(46, 23, 88, 0.05);
+  /* Hero gradient (deep → lighter purple, ~140°) */
+  --hero-from: #362465;
+  --hero-mid:  #3F2A78;
+  --hero-to:   #5F3E9C;
+  --grad-hero: linear-gradient(140deg, var(--hero-from) 0%, var(--hero-mid) 48%, var(--hero-to) 100%);
+
+  /* Brand-mark gradients (logo / app-icon tile) */
+  --grad-mark:      linear-gradient(155deg, #6B47C7, #3A1F6B 72%);
+  --grad-mark-full: linear-gradient(212deg, #4B2E83 0%, #5151A4 50%, #36B5D6 100%);
+
+  /* Progress (mint → bright mint) */
+  --grad-progress: linear-gradient(90deg, var(--color-signal), var(--color-signal-bright));
+
+  /* Shadows — always purple-tinted, never neutral grey */
+  --shadow-soft:     0 4px 20px rgba(75, 46, 131, 0.06);
+  --shadow-card:     0 4px 20px rgba(75, 46, 131, 0.08);
+  --shadow-elevated: 0 18px 48px -18px rgba(75, 46, 131, 0.34);
+  --shadow-btn:      0 12px 26px -10px rgba(75, 46, 131, 0.50);
+
+  /* The DigiTech wing — SVG mask, paint via color or background gradient. */
+  --swoosh: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 86"><path d="M8 50 C30 41 48 37 64 40 C78 42 86 56 96 74 C104 52 126 22 150 16 C172 11 194 18 212 43 C213 46 212 49 209 50 C192 28 172 23 152 27 C130 32 110 55 98 80 C92 70 86 60 76 54 C64 47 62 47 60 47 C44 44 28 48 9 55 Z" fill="black"/></svg>');
 }
 
-body {
+html, body {
   background: var(--background);
   color: var(--foreground);
+  font-family: var(--font-sans);
 }
 
-/* ========== Prose — CMS markdown rendering ========== */
-.prose h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.75rem; margin-top: 1.5rem; }
-.prose h2 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; margin-top: 1.25rem; color: #1e40af; }
-.prose h3 { font-size: 1rem; font-weight: 600; margin-bottom: 0.5rem; margin-top: 1rem; }
-.prose p { margin-bottom: 0.75rem; line-height: 1.7; }
-.prose ul { list-style: disc; padding-right: 1.5rem; margin-bottom: 0.75rem; }
+/* Always render numbers tabular for progress / time alignment. */
+.num,
+[data-numbers],
+.tabular-nums {
+  font-family: var(--font-numbers);
+  font-feature-settings: "tnum";
+}
+
+/* The DigiTech wing — apply currentColor on a span; size with width. */
+.swoosh {
+  display: block;
+  width: 120px;
+  aspect-ratio: 220 / 86;
+  background-color: currentColor;
+  -webkit-mask: var(--swoosh) center / contain no-repeat;
+          mask: var(--swoosh) center / contain no-repeat;
+}
+
+/* App-icon / avatar badge: purple→teal tile + white wing + mint spark. */
+.brand-badge {
+  --s: 40px;
+  position: relative;
+  width: var(--s);
+  height: var(--s);
+  border-radius: calc(var(--s) * 0.28);
+  background: var(--grad-mark);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 16px 34px -14px rgba(75, 46, 131, 0.62);
+}
+.brand-badge .swoosh {
+  width: 66%;
+  color: #fff;
+}
+.brand-badge::after {
+  content: "";
+  position: absolute;
+  top: 26%;
+  right: 24%;
+  width: calc(var(--s) * 0.135);
+  height: calc(var(--s) * 0.135);
+  border-radius: 50%;
+  background: var(--color-signal);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.18);
+}
+
+/* ============================================================================
+   Prose — CMS markdown rendering (admin editor preview)
+   ============================================================================ */
+.prose h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.75rem; margin-top: 1.5rem; color: var(--color-neutral-950); }
+.prose h2 { font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem; margin-top: 1.25rem; color: var(--color-brand-purple-700); }
+.prose h3 { font-size: 1rem;    font-weight: 600; margin-bottom: 0.5rem;  margin-top: 1rem;    color: var(--color-neutral-950); }
+.prose p  { margin-bottom: 0.75rem; line-height: 1.7; }
+.prose ul { list-style: disc;    padding-right: 1.5rem; margin-bottom: 0.75rem; }
 .prose ol { list-style: decimal; padding-right: 1.5rem; margin-bottom: 0.75rem; }
 .prose li { margin-bottom: 0.25rem; }
 .prose table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; font-size: 0.875rem; }
-.prose th { background: #eff6ff; padding: 0.5rem 0.75rem; border: 1px solid #bfdbfe; font-weight: 600; text-align: right; }
-.prose td { padding: 0.5rem 0.75rem; border: 1px solid #e5e7eb; }
-.prose tr:nth-child(even) td { background: #f9fafb; }
-.prose code { background: #f3f4f6; padding: 0.1rem 0.3rem; border-radius: 0.25rem; font-size: 0.875em; font-family: monospace; }
-.prose pre { background: #1f2937; color: #f9fafb; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin-bottom: 1rem; }
-.prose blockquote { border-right: 4px solid #3b82f6; padding-right: 1rem; color: #6b7280; margin-bottom: 0.75rem; }
+.prose th { background: var(--color-brand-purple-50); padding: 0.5rem 0.75rem; border: 1px solid var(--color-brand-purple-200); font-weight: 600; text-align: right; color: var(--color-brand-purple-700); }
+.prose td { padding: 0.5rem 0.75rem; border: 1px solid var(--color-neutral-200); }
+.prose tr:nth-child(even) td { background: var(--color-neutral-100); }
+.prose code { background: var(--color-brand-purple-50); padding: 0.1rem 0.3rem; border-radius: 0.25rem; font-size: 0.875em; font-family: var(--font-numbers); color: var(--color-brand-purple-700); }
+.prose pre { background: var(--color-neutral-950); color: #fff; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; margin-bottom: 1rem; font-family: var(--font-numbers); }
+.prose blockquote { border-right: 4px solid var(--color-brand-purple-500); padding-right: 1rem; color: var(--color-neutral-700); margin-bottom: 0.75rem; }
 .prose strong { font-weight: 700; }
-.prose a { color: #2563eb; text-decoration: underline; }
-.prose hr { border-color: #e5e7eb; margin: 1.5rem 0; }
+.prose a { color: var(--color-brand-purple-500); text-decoration: underline; }
+.prose hr { border-color: var(--color-neutral-200); margin: 1.5rem 0; }
 
-/* ========== Prose-learn — lesson body in /learn ========== */
+/* ============================================================================
+   Prose-learn — lesson body in /learn (the LIGHT content frame)
+   ============================================================================ */
 .prose-learn {
   color: var(--color-neutral-700);
   font-size: 1rem;
@@ -98,21 +200,22 @@ body {
 }
 .prose-learn h2 { font-size: 1.375rem; font-weight: 700; color: var(--color-neutral-950); margin: 1.75rem 0 0.75rem; }
 .prose-learn h3 { font-size: 1.125rem; font-weight: 700; color: var(--color-neutral-950); margin: 1.25rem 0 0.5rem; }
-.prose-learn p { margin-bottom: 1rem; line-height: 1.8; }
-.prose-learn ul { list-style: disc; padding-right: 1.5rem; margin-bottom: 1rem; }
+.prose-learn p  { margin-bottom: 1rem; line-height: 1.8; }
+.prose-learn ul { list-style: disc;    padding-right: 1.5rem; margin-bottom: 1rem; }
 .prose-learn ol { list-style: decimal; padding-right: 1.5rem; margin-bottom: 1rem; }
 .prose-learn li { margin-bottom: 0.5rem; }
 .prose-learn strong { color: var(--color-neutral-950); font-weight: 700; }
 .prose-learn a { color: var(--color-brand-purple-700); text-decoration: underline; text-underline-offset: 2px; }
-.prose-learn a:hover { color: var(--color-brand-purple-600); }
+.prose-learn a:hover { color: var(--color-brand-purple-500); }
 .prose-learn .timestamp {
   display: inline-block;
-  background: var(--color-brand-purple-100);
+  background: var(--color-brand-purple-50);
   color: var(--color-brand-purple-700);
   padding: 0.125rem 0.5rem;
   border-radius: 999px;
   font-size: 0.8125rem;
   font-weight: 600;
   margin-inline-end: 0.375rem;
-  font-variant-numeric: tabular-nums;
+  font-family: var(--font-numbers);
+  font-feature-settings: "tnum";
 }

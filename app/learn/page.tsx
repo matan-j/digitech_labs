@@ -35,58 +35,66 @@ export default async function LearnDashboard() {
         className="relative overflow-hidden rounded-panel text-white px-7 sm:px-10 py-10 sm:py-12 mb-8 sm:mb-10"
         style={{
           backgroundImage: coverUrl
-            ? `linear-gradient(135deg, rgba(46,23,88,0.85) 0%, rgba(75,42,132,0.78) 55%, rgba(91,53,160,0.72) 100%), url(${coverUrl})`
-            : 'linear-gradient(135deg, #2E1758 0%, #4B2A84 55%, #5B35A0 100%)',
+            ? `linear-gradient(140deg, rgba(54,36,101,0.86) 0%, rgba(63,42,120,0.80) 48%, rgba(95,62,156,0.74) 100%), url(${coverUrl})`
+            : 'var(--grad-hero)',
           backgroundSize: 'cover',
           backgroundPosition: 'center',
+          boxShadow: 'var(--shadow-elevated)',
         }}
       >
-        {/* subtle radial pattern (kept even with cover for depth) */}
+        {/* subtle radial pattern for depth */}
         <div
           aria-hidden
           className="absolute inset-0 pointer-events-none"
           style={{
             backgroundImage:
-              'radial-gradient(circle at 88% 18%, rgba(196,184,230,0.18), transparent 50%), radial-gradient(circle at 8% 92%, rgba(25,194,160,0.10), transparent 55%)',
+              'radial-gradient(circle at 88% 12%, rgba(196,184,230,0.18), transparent 50%), radial-gradient(circle at 6% 95%, rgba(31,181,138,0.12), transparent 55%)',
           }}
         />
         <div className="relative">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-pill bg-white/12 backdrop-blur-sm text-[11px] font-semibold tracking-wide text-white/90">
-            <span className="w-1.5 h-1.5 rounded-full bg-brand-accent" />
-            Learning Hub · Digitech
+          {/* Signal-pill eyebrow */}
+          <span
+            className="inline-flex items-center gap-2 px-3 py-1 rounded-pill text-[11px] font-bold tracking-wide text-white"
+            style={{ backgroundColor: 'rgba(31,181,138,0.22)' }}
+          >
+            <span
+              className="w-1.5 h-1.5 rounded-full"
+              style={{ backgroundColor: 'var(--color-signal)' }}
+            />
+            DigiTech HUB · השכלה פרקטית
           </span>
 
-          <h1 className="mt-4 text-3xl sm:text-4xl font-extrabold tracking-tight leading-tight">
-            {displayName ? `היי ${displayName}, ברוך הבא חזרה` : 'ברוך הבא ל־Digitech Learning Hub'}
+          <h1 className="mt-4 text-3xl sm:text-4xl lg:text-[44px] font-extrabold tracking-tight leading-[1.05]">
+            {displayName ? `היי ${displayName}, ברוך הבא חזרה` : 'ברוך הבא ל־DigiTech HUB'}
           </h1>
           <p className="mt-3 text-base sm:text-lg text-white/85 max-w-2xl">
             מרכז הלמידה שלך לקורסים, מדריכים ופלייבוקים פרקטיים.
           </p>
 
-          {/* Quick actions — max 3 buttons per spec */}
+          {/* Quick actions */}
           <div className="mt-7 flex flex-wrap gap-2.5">
             <Link
               href="/learn/courses"
-              className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-pill bg-white text-brand-purple-700 text-sm font-semibold hover:bg-white/90 transition-colors"
+              className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-pill bg-white text-brand-purple-700 text-sm font-bold hover:scale-[1.02] active:scale-[0.97] transition-transform"
+              style={{ boxShadow: '0 12px 26px -10px rgba(0,0,0,.35)' }}
             >
               המשך ללמוד
               <ArrowLeft className="w-4 h-4" />
             </Link>
             <Link
               href="/learn/guides"
-              className="inline-flex items-center px-5 py-2.5 rounded-pill border border-white/30 text-white text-sm font-semibold hover:bg-white/10 transition-colors"
+              className="inline-flex items-center px-5 py-2.5 rounded-pill border border-white/25 text-white text-sm font-semibold hover:bg-white/10 transition-colors"
             >
               גלה מדריכים
             </Link>
             <Link
               href="/learn/playbooks"
-              className="inline-flex items-center px-5 py-2.5 rounded-pill border border-white/30 text-white text-sm font-semibold hover:bg-white/10 transition-colors"
+              className="inline-flex items-center px-5 py-2.5 rounded-pill border border-white/25 text-white text-sm font-semibold hover:bg-white/10 transition-colors"
             >
               צפה בפלייבוקים
             </Link>
           </div>
 
-          {/* Auth/access nudge — minimal, below buttons */}
           {!auth && (
             <p className="mt-6 text-sm text-white/70">
               <Link href="/login" className="underline font-semibold hover:text-white">התחבר</Link>
@@ -102,7 +110,7 @@ export default async function LearnDashboard() {
         </div>
       </section>
 
-      {/* ===== Stats — only when logged in & only real metrics ===== */}
+      {/* ===== Stats — only when logged in ===== */}
       {auth && (
         <section className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-10">
           <KpiCard
@@ -133,7 +141,7 @@ export default async function LearnDashboard() {
         </section>
       )}
 
-      {/* ===== Courses section ===== */}
+      {/* ===== Courses ===== */}
       <section>
         <div className="flex items-end justify-between mb-5">
           <div>
@@ -143,7 +151,7 @@ export default async function LearnDashboard() {
           {courses.length > 0 && (
             <Link
               href="/learn/courses"
-              className="text-sm font-semibold text-brand-purple-700 hover:text-brand-purple-600"
+              className="text-sm font-semibold text-brand-purple-700 hover:text-brand-purple-500"
             >
               לכל הקורסים →
             </Link>
@@ -169,7 +177,7 @@ export default async function LearnDashboard() {
         )}
       </section>
 
-      {/* ===== Guides section — only render if there are any ===== */}
+      {/* ===== Guides ===== */}
       {publishedGuides.length > 0 && (
         <section className="mt-12">
           <div className="flex items-end justify-between mb-5">
@@ -179,7 +187,7 @@ export default async function LearnDashboard() {
             </div>
             <Link
               href="/learn/guides"
-              className="text-sm font-semibold text-brand-purple-700 hover:text-brand-purple-600"
+              className="text-sm font-semibold text-brand-purple-700 hover:text-brand-purple-500"
             >
               לכל המדריכים →
             </Link>
@@ -189,7 +197,7 @@ export default async function LearnDashboard() {
               <Link
                 key={g.id}
                 href={`/learn/guides/${g.slug}`}
-                className="group block bg-white rounded-card border border-brand-purple-200 p-6 hover:border-brand-purple-300 transition-colors"
+                className="group block bg-white rounded-card border border-neutral-200 p-6 hover:border-brand-purple-700 transition-colors"
                 style={{ boxShadow: 'var(--shadow-card)' }}
               >
                 <h3 className="font-extrabold text-neutral-950 group-hover:text-brand-purple-700 transition-colors">
@@ -211,7 +219,7 @@ export default async function LearnDashboard() {
 // Components — KPI + Empty State
 // ============================================================================
 
-type Icon = React.ComponentType<{ className?: string }>;
+type Icon = React.ComponentType<{ className?: string; style?: React.CSSProperties }>;
 
 function KpiCard({
   icon: Icon,
@@ -228,17 +236,21 @@ function KpiCard({
 }) {
   return (
     <div
-      className="relative bg-white rounded-card border border-brand-purple-200 p-5 sm:p-6 overflow-hidden"
+      className="relative bg-white rounded-card border border-neutral-200 p-5 sm:p-6 overflow-hidden"
       style={{ boxShadow: 'var(--shadow-card)' }}
     >
       {accent && (
         <span
           aria-hidden
-          className="absolute top-0 inset-x-0 h-0.5 bg-brand-accent rounded-t-card"
+          className="absolute top-0 inset-x-0 h-0.5 rounded-t-card"
+          style={{ backgroundColor: 'var(--color-signal)' }}
         />
       )}
       <div className="flex items-center justify-between">
-        <Icon className="w-4 h-4 text-brand-purple-700" />
+        <Icon
+          className={`w-4 h-4 ${accent ? '' : 'text-brand-purple-700'}`}
+          style={accent ? { color: 'var(--color-signal)' } : undefined}
+        />
       </div>
       <p className="mt-3 text-3xl sm:text-4xl font-extrabold text-neutral-950 tabular-nums leading-none">
         {value}
@@ -262,10 +274,10 @@ function EmptyState({
 }) {
   return (
     <div
-      className="bg-white rounded-card border border-brand-purple-200 px-6 py-14 text-center"
+      className="bg-white rounded-card border border-neutral-200 px-6 py-14 text-center"
       style={{ boxShadow: 'var(--shadow-card)' }}
     >
-      <div className="mx-auto w-12 h-12 rounded-pill bg-brand-purple-100 flex items-center justify-center text-brand-purple-700">
+      <div className="mx-auto w-12 h-12 rounded-pill bg-brand-purple-50 flex items-center justify-center text-brand-purple-700">
         <Icon className="w-5 h-5" />
       </div>
       <h3 className="mt-4 text-lg font-extrabold text-neutral-950">{title}</h3>
@@ -274,6 +286,7 @@ function EmptyState({
         <Link
           href={cta.href}
           className="inline-flex items-center gap-1.5 mt-5 px-5 py-2.5 rounded-pill bg-brand-purple-700 hover:bg-brand-purple-600 text-white text-sm font-semibold transition-colors"
+          style={{ boxShadow: 'var(--shadow-btn)' }}
         >
           {cta.label}
           {cta.href.startsWith('/admin') ? null : <ArrowLeft className="w-3.5 h-3.5" />}
@@ -282,4 +295,3 @@ function EmptyState({
     </div>
   );
 }
-

@@ -34,7 +34,7 @@ export default function UsersTable({ users }: { users: UserRow[] }) {
 
   const filtered = users.filter((u) => !search || u.email?.toLowerCase().includes(search.toLowerCase()));
 
-  async function setRole(userId: string, role: 'admin' | 'subscriber') {
+  async function setRole(userId: string, role: 'admin' | 'subscriber' | 'creator') {
     setBusyId(userId);
     const res = await fetch(`/api/admin/users/${userId}`, {
       method: 'PATCH',
@@ -96,10 +96,14 @@ export default function UsersTable({ users }: { users: UserRow[] }) {
                   <span
                     className={[
                       'inline-block px-2 py-0.5 rounded-pill text-[11px] font-semibold',
-                      u.role === 'admin' ? 'bg-brand-purple-100 text-brand-purple-800' : 'bg-neutral-100 text-neutral-600',
+                      u.role === 'admin'
+                        ? 'bg-brand-purple-100 text-brand-purple-800'
+                        : u.role === 'creator'
+                          ? 'bg-indigo-100 text-indigo-800'
+                          : 'bg-neutral-100 text-neutral-600',
                     ].join(' ')}
                   >
-                    {u.role === 'admin' ? 'אדמין' : 'משתמש'}
+                    {u.role === 'admin' ? 'אדמין' : u.role === 'creator' ? 'יוצר' : 'משתמש'}
                   </span>
                 </td>
                 <td className="px-4 py-3">
@@ -110,25 +114,46 @@ export default function UsersTable({ users }: { users: UserRow[] }) {
                 <td className="px-4 py-3 text-neutral-500 text-xs">{formatDate(u.current_period_end)}</td>
                 <td className="px-4 py-3 text-neutral-500 text-xs">{formatDate(u.created_at)}</td>
                 <td className="px-4 py-3">
-                  {u.role === 'admin' ? (
-                    <button
-                      type="button"
-                      onClick={() => setRole(u.id, 'subscriber')}
-                      disabled={busyId === u.id || pending}
-                      className="text-xs text-neutral-500 hover:text-neutral-900 disabled:opacity-50"
-                    >
-                      הסר אדמין
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => setRole(u.id, 'admin')}
-                      disabled={busyId === u.id || pending}
-                      className="text-xs text-brand-purple-700 hover:text-brand-purple-800 font-semibold disabled:opacity-50"
-                    >
-                      קדם לאדמין
-                    </button>
-                  )}
+                  <div className="flex items-center gap-3">
+                    {u.role === 'admin' ? (
+                      <button
+                        type="button"
+                        onClick={() => setRole(u.id, 'subscriber')}
+                        disabled={busyId === u.id || pending}
+                        className="text-xs text-neutral-500 hover:text-neutral-900 disabled:opacity-50"
+                      >
+                        הסר אדמין
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setRole(u.id, 'admin')}
+                        disabled={busyId === u.id || pending}
+                        className="text-xs text-brand-purple-700 hover:text-brand-purple-800 font-semibold disabled:opacity-50"
+                      >
+                        קדם לאדמין
+                      </button>
+                    )}
+                    {u.role === 'creator' ? (
+                      <button
+                        type="button"
+                        onClick={() => setRole(u.id, 'subscriber')}
+                        disabled={busyId === u.id || pending}
+                        className="text-xs text-neutral-500 hover:text-neutral-900 disabled:opacity-50"
+                      >
+                        הסר יוצר
+                      </button>
+                    ) : u.role !== 'admin' ? (
+                      <button
+                        type="button"
+                        onClick={() => setRole(u.id, 'creator')}
+                        disabled={busyId === u.id || pending}
+                        className="text-xs text-indigo-700 hover:text-indigo-800 font-semibold disabled:opacity-50"
+                      >
+                        קדם ליוצר
+                      </button>
+                    ) : null}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -166,7 +191,7 @@ function CreateUserModal({
   const [email, setEmail] = useState('');
   const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState(generatePassword());
-  const [role, setRole] = useState<'admin' | 'subscriber'>('subscriber');
+  const [role, setRole] = useState<'admin' | 'subscriber' | 'creator'>('subscriber');
   const [status, setStatus] = useState<UserRow['subscription_status']>('active');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -275,10 +300,11 @@ function CreateUserModal({
                 <label className="block text-xs font-semibold text-neutral-600 mb-1">תפקיד</label>
                 <select
                   value={role}
-                  onChange={(e) => setRole(e.target.value as 'admin' | 'subscriber')}
+                  onChange={(e) => setRole(e.target.value as 'admin' | 'subscriber' | 'creator')}
                   className="w-full px-3 py-2 rounded-md border border-neutral-300 focus:border-brand-purple-400 focus:outline-none text-sm bg-white"
                 >
                   <option value="subscriber">משתמש</option>
+                  <option value="creator">יוצר</option>
                   <option value="admin">אדמין</option>
                 </select>
               </div>

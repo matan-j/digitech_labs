@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ArrowLeft, Clock, Layers } from 'lucide-react';
+import { ArrowLeft, Layers, Clock } from 'lucide-react';
 import type { Course } from '@/lib/learn/types';
 
 export default function CourseCard({ course }: { course: Course }) {
@@ -9,22 +9,19 @@ export default function CourseCard({ course }: { course: Course }) {
     <Link
       href={`/learn/courses/${course.slug}`}
       className="
-        group block bg-white rounded-card border border-brand-purple-200
-        hover:border-brand-purple-400 transition-all overflow-hidden
+        group block bg-white rounded-card border border-neutral-200
+        hover:border-brand-purple-700 transition-all overflow-hidden
       "
       style={{ boxShadow: 'var(--shadow-card)' }}
     >
       {/* Cover */}
       <div
-        className={[
-          'aspect-[16/9] relative',
-          course.cover === 'header' ? 'bg-brand-purple-900' : 'bg-brand-purple-700',
-        ].join(' ')}
+        className="aspect-[16/9] relative bg-brand-purple-900"
         style={{
           backgroundImage:
             course.cover === 'header'
-              ? 'linear-gradient(180deg, #1A0F3D 0%, #2E1758 100%)'
-              : 'linear-gradient(135deg, #2E1758 0%, #4B2A84 60%, #5B35A0 100%)',
+              ? 'linear-gradient(180deg, #1A0F3D 0%, #2E1A5C 100%)'
+              : 'linear-gradient(135deg, #2E1A5C 0%, #4B2E83 60%, #5F3E9C 100%)',
         }}
       >
         <div
@@ -32,16 +29,16 @@ export default function CourseCard({ course }: { course: Course }) {
           className="absolute inset-0 opacity-40"
           style={{
             backgroundImage:
-              'radial-gradient(circle at 80% 30%, rgba(196,184,230,0.35), transparent 55%), radial-gradient(circle at 20% 80%, rgba(15,10,31,0.6), transparent 55%)',
+              'radial-gradient(circle at 80% 25%, rgba(196,184,230,0.32), transparent 55%), radial-gradient(circle at 18% 88%, rgba(26,15,61,0.55), transparent 55%)',
           }}
         />
         <div className="absolute inset-0 p-5 flex flex-col justify-end">
           {course.audience && (
-            <span className="self-start inline-flex items-center text-[11px] font-semibold uppercase tracking-wider text-brand-purple-100 bg-white/10 backdrop-blur-sm px-2 py-1 rounded-pill">
+            <span className="self-start inline-flex items-center text-[11px] font-semibold uppercase tracking-wider text-white/85 bg-white/12 backdrop-blur-sm px-2.5 py-1 rounded-pill">
               {course.audience}
             </span>
           )}
-          <h3 className="mt-2 text-white font-extrabold text-lg leading-tight line-clamp-2">
+          <h3 className="mt-2.5 text-white font-extrabold text-lg leading-tight line-clamp-2">
             {course.title}
           </h3>
         </div>
@@ -53,27 +50,24 @@ export default function CourseCard({ course }: { course: Course }) {
           {course.tagline}
         </p>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3 text-xs text-neutral-500">
-            <span className="inline-flex items-center gap-1">
+          <div className="flex items-center gap-2.5 text-xs text-neutral-500">
+            <span className="inline-flex items-center gap-1.5 tabular-nums">
               <Layers className="w-3.5 h-3.5" />
               {totalLessons} שיעורים
             </span>
             {course.lastUpdated && (
-              <span className="inline-flex items-center gap-1">
-                <Clock className="w-3.5 h-3.5" />
-                {course.lastUpdated}
-              </span>
+              <>
+                <span className="text-neutral-300" aria-hidden>·</span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Clock className="w-3.5 h-3.5" />
+                  {course.lastUpdated}
+                </span>
+              </>
             )}
           </div>
-          <span
-            className="
-              inline-flex items-center gap-1.5 text-sm font-semibold
-              text-brand-purple-700
-              group-hover:text-brand-purple-600 transition-colors
-            "
-          >
+          <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-purple-700 group-hover:text-brand-purple-500 transition-colors">
             התחל
-            <ArrowLeft className="w-4 h-4" />
+            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
           </span>
         </div>
       </div>

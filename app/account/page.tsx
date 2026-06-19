@@ -11,7 +11,7 @@ export default async function AccountPage() {
   const { email, profile } = await requireUser('/account');
 
   return (
-    <main className="min-h-screen bg-brand-purple-50 px-4 py-10">
+    <main className="min-h-screen px-4 py-10" style={{ backgroundColor: 'var(--color-bg-main)' }}>
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-8">
           <div>

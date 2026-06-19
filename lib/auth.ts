@@ -5,7 +5,7 @@ export type Profile = {
   id: string;
   full_name: string | null;
   avatar_url: string | null;
-  role: 'admin' | 'subscriber';
+  role: 'admin' | 'subscriber' | 'creator';
   subscription_status: 'active' | 'cancelled' | 'past_due' | 'none';
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
@@ -64,6 +64,46 @@ export async function requireAdmin(): Promise<AuthState> {
 /** True if user has active premium access (subscriber w/ active sub OR admin). */
 export function hasPremiumAccess(profile: Profile): boolean {
   return profile.role === 'admin' || profile.subscription_status === 'active';
+}
+
+export type CreatorRow = {
+  id: string;
+  slug: string;
+  name: string;
+  status: 'active' | 'disabled';
+};
+
+/**
+ * Returns the creator row linked to the current user, or null if the user
+ * is not a creator. Admins are not auto-linked — they manage via /admin.
+ */
+export async function getMyCreator(): Promise<CreatorRow | null> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data } = await supabase
+    .from('creators')
+    .select('id, slug, name, status')
+    .eq('user_id', user.id)
+    .maybeSingle();
+  return (data as CreatorRow) ?? null;
+}
+
+/**
+ * Gate for the creator dashboard. Requires an authenticated user who is either
+ * an admin or a linked creator. Returns the auth state plus the creator row
+ * (null for admins, who may not have a creator profile of their own).
+ */
+export async function requireCreator(returnTo?: string): Promise<{ auth: AuthState; creator: CreatorRow | null }> {
+  const auth = await requireUser(returnTo);
+  if (auth.profile.role === 'admin') {
+    return { auth, creator: await getMyCreator() };
+  }
+  const creator = await getMyCreator();
+  if (auth.profile.role !== 'creator' || !creator || creator.status !== 'active') {
+    redirect('/learn');
+  }
+  return { auth, creator };
 }
 
 /** Redirect to /upgrade if no premium access. */

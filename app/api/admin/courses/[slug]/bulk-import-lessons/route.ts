@@ -149,17 +149,24 @@ export async function POST(
     );
   }
 
-  // Determine which valid rows are inserts vs updates
+  // Determine which valid rows are inserts vs updates, and capture the existing
+  // module_id per slug so updates don't accidentally move a lesson out of its
+  // current module (which would violate the (module_id, slug) UNIQUE constraint
+  // if another lesson with the same slug already lives in the default module).
   const validSlugs = parsed.valid.map((p) => p.slug);
   let existingSlugs = new Set<string>();
+  const existingModuleBySlug = new Map<string, string>();
   let existingNotInSheet = 0;
 
   if (validSlugs.length > 0 || mode === 'preview') {
     const { data: existing } = await admin
       .from('lessons')
-      .select('slug')
+      .select('slug, module_id')
       .eq('course_id', course.id);
     const all = new Set((existing ?? []).map((r) => r.slug));
+    for (const row of existing ?? []) {
+      if (row.module_id) existingModuleBySlug.set(row.slug, row.module_id);
+    }
     existingSlugs = new Set(validSlugs.filter((s) => all.has(s)));
     existingNotInSheet = [...all].filter((s) => !validSlugs.includes(s)).length;
   }
@@ -212,8 +219,48 @@ export async function POST(
     });
   }
 
+  // Lessons are NOT NULL on module_id (since migration 012). For NEW slugs we
+  // need a module to insert into. Prefer the course's first module by position;
+  // create a default "module-1" if the course has none yet.
+  let defaultModuleId: string | null = null;
+  {
+    const { data: mods, error: modsErr } = await admin
+      .from('modules')
+      .select('id')
+      .eq('course_id', course.id)
+      .order('position', { ascending: true })
+      .limit(1);
+    if (modsErr) {
+      return NextResponse.json({ error: 'db_error', message: modsErr.message }, { status: 500 });
+    }
+    if (mods && mods.length > 0) {
+      defaultModuleId = mods[0].id;
+    } else {
+      const { data: created, error: createErr } = await admin
+        .from('modules')
+        .insert({
+          course_id: course.id,
+          num: 1,
+          slug: 'module-1',
+          title: 'מודול 1',
+          position: 0,
+        })
+        .select('id')
+        .single();
+      if (createErr || !created) {
+        return NextResponse.json(
+          { error: 'module_create_failed', message: createErr?.message ?? 'unknown' },
+          { status: 500 }
+        );
+      }
+      defaultModuleId = created.id;
+    }
+  }
+
   const rowsToWrite = parsed.valid.map((p: ParsedLesson) => ({
     course_id: course.id,
+    // Preserve existing lesson's module_id on update; use default for inserts.
+    module_id: existingModuleBySlug.get(p.slug) ?? defaultModuleId,
     num: p.num,
     slug: p.slug,
     title: p.title,

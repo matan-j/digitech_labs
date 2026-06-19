@@ -1,0 +1,484 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>Learning Hub — Brand Book</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  deck-stage:not(:defined){visibility:hidden}
+  :root{
+    /* surfaces */
+    --bg:#F7F6FB; --bg-tint:#F3EEFF; --surface:#FFFFFF; --surface-2:#FAF9FE;
+    --border:#ECE9F5; --border-2:#E1DDEF;
+    /* ink */
+    --ink:#1C1430; --ink-2:#5B5572; --ink-3:#928CA6;
+    /* brand */
+    --primary:#4B2E83; --primary-hover:#5C3BA0; --bright:#6B3FE0; --violet:#8B5CF6;
+    --p50:#F3EEFF; --p100:#E8E0FB;
+    --teal:#2BA8C9; --teal-bright:#4CBCDC;
+    --hero-from:#362465; --hero-to:#5F3E9C;
+    --swoosh:url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 86"><path d="M8 50 C30 41 48 37 64 40 C78 42 86 56 96 74 C104 52 126 22 150 16 C172 11 194 18 212 43 C213 46 212 49 209 50 C192 28 172 23 152 27 C130 32 110 55 98 80 C92 70 86 60 76 54 C64 47 62 47 60 47 C44 44 28 48 9 55 Z" fill="black"/></svg>');
+    /* signal */
+    --signal:#1FB58A; --signal-50:#E4F7F1; --gold:#E0982E; --gold-50:#FBF1DF;
+    /* type */
+    --f:"Rubik",system-ui,sans-serif; --fm:"Space Grotesk",monospace;
+    /* tokens */
+    --shadow-card:0 4px 20px rgba(75,46,131,.08);
+    --shadow-elev:0 18px 48px -18px rgba(75,46,131,.34);
+    --shadow-btn:0 12px 26px -10px rgba(75,46,131,.5);
+    --pad-x:108px; --pad-y:74px;
+  }
+  html,body{margin:0;background:#0c0a14;color:var(--ink);font-family:var(--f);}
+  deck-stage > section{background:var(--bg);color:var(--ink);overflow:hidden;direction:rtl;}
+
+  .pad{position:absolute;inset:0;padding:var(--pad-y) var(--pad-x);display:flex;flex-direction:column;gap:34px;}
+  .pad > main{flex:1;display:flex;flex-direction:column;justify-content:center;min-height:0;}
+  .meta{display:flex;justify-content:space-between;align-items:center;font-family:var(--fm);font-size:16px;color:var(--ink-3);letter-spacing:.14em;text-transform:uppercase;flex:0 0 auto;font-weight:500;}
+  .num{color:var(--ink-3);opacity:.7;}
+  .eyebrow{font-family:var(--fm);font-size:16px;letter-spacing:.22em;text-transform:uppercase;color:var(--primary);font-weight:600;display:flex;align-items:center;gap:13px;}
+  .eyebrow::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--signal);}
+  .wash{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 70% 55% at 86% 6%,rgba(107,63,224,.10),transparent 62%),radial-gradient(ellipse 50% 45% at 6% 96%,rgba(75,46,131,.06),transparent 70%);}
+  .grid-bg{position:absolute;inset:0;pointer-events:none;opacity:.6;background-image:linear-gradient(rgba(75,46,131,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(75,46,131,.05) 1px,transparent 1px);background-size:78px 78px;mask-image:radial-gradient(ellipse 75% 65% at 70% 40%,#000 25%,transparent 80%);}
+
+  h2.title{font-family:var(--f);font-weight:800;font-size:72px;line-height:1;letter-spacing:-.02em;margin:0;color:var(--ink);}
+  .badge{position:relative;width:var(--s,64px);height:var(--s,64px);border-radius:calc(var(--s,64px)*.30);background:linear-gradient(155deg,#6B47C7,#3A1F6B 72%);display:flex;align-items:center;justify-content:center;box-shadow:0 16px 34px -14px rgba(75,46,131,.62);flex:0 0 auto;}
+  .badge svg{width:58%;height:58%;}
+  .swoosh{display:block;width:62%;aspect-ratio:220/86;background-color:currentColor;-webkit-mask:var(--swoosh) center/contain no-repeat;mask:var(--swoosh) center/contain no-repeat;color:#fff;}
+  .badge .swoosh{width:66%;}
+  .badge:has(.swoosh)::after{content:"";position:absolute;top:27%;right:25%;width:calc(var(--s,64px)*.135);height:calc(var(--s,64px)*.135);border-radius:50%;background:var(--signal);box-shadow:0 0 0 2px rgba(255,255,255,.2);}
+  .hub{font-style:normal;font-weight:800;font-size:.46em;letter-spacing:.05em;color:var(--bright);vertical-align:.14em;margin-inline-start:.2em;}
+  .cover .hub,.plate.deep .hub{color:#C9B6FF;}
+  .wordmark{text-align:center;line-height:1;}
+  .wordmark b{font-size:48px;font-weight:800;letter-spacing:-.02em;color:var(--ink);display:block;}
+  .wordmark span{display:block;margin-top:10px;font-size:21px;color:var(--ink-3);font-weight:500;letter-spacing:.04em;}
+
+  /* COVER */
+  .cover{background:linear-gradient(140deg,var(--hero-from) 0%,#3F2A78 46%,var(--hero-to) 100%);color:#fff;}
+  .cover .gloss{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 60% 50% at 88% -6%,rgba(255,255,255,.16),transparent 60%);}
+  .cover .meta{color:rgba(255,255,255,.62);}
+  .cover .num{color:rgba(255,255,255,.5);}
+  .cover .lock{display:flex;align-items:center;gap:18px;margin-bottom:auto;}
+  .cover .lock .badge{background:rgba(255,255,255,.12);box-shadow:none;border:1px solid rgba(255,255,255,.22);}
+  .cover .lock .t{display:flex;flex-direction:column;line-height:1.06;}
+  .cover .lock .t b{font-size:30px;font-weight:700;letter-spacing:-.01em;}
+  .cover .lock .t span{font-size:18px;color:rgba(255,255,255,.6);font-weight:400;}
+  .cover h1{font-family:var(--f);font-weight:800;font-size:138px;line-height:.9;letter-spacing:-.035em;margin:0;color:#fff;}
+  .cover h1 .ac{color:#C9B6FF;}
+  .cover .sub{font-size:31px;color:rgba(255,255,255,.78);max-width:920px;margin:28px 0 0;line-height:1.4;font-weight:400;}
+  .cover .chips{display:flex;gap:12px;margin-top:36px;}
+  .cover .chips span{font-family:var(--fm);font-size:15px;font-weight:500;letter-spacing:.08em;color:#fff;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.18);border-radius:999px;padding:9px 18px;}
+
+  /* PRINCIPLES */
+  .cols3{display:grid;grid-template-columns:repeat(3,1fr);gap:26px;}
+  .pcard{background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:40px 36px;display:flex;flex-direction:column;gap:16px;min-height:330px;box-shadow:var(--shadow-card);}
+  .pcard .pn{font-family:var(--fm);font-size:20px;color:var(--signal);font-weight:600;}
+  .pcard .pw{font-weight:800;font-size:50px;line-height:1;letter-spacing:-.02em;color:var(--ink);}
+  .pcard .pe{font-family:var(--fm);font-size:16px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.12em;margin-top:-6px;font-weight:500;}
+  .pcard .pb{font-size:22px;line-height:1.5;color:var(--ink-2);margin-top:auto;}
+
+  /* LOGO */
+  .logo-grid{display:grid;grid-template-columns:1.3fr 1fr;gap:26px;flex:1;}
+  .plate{border-radius:22px;display:flex;align-items:center;justify-content:center;gap:22px;position:relative;box-shadow:var(--shadow-card);}
+  .plate.light{background:var(--surface);border:1px solid var(--border);}
+  .plate.tint{background:var(--p50);border:1px solid var(--p100);}
+  .plate.deep{background:linear-gradient(150deg,var(--hero-from),var(--hero-to));}
+  .plate .lk{display:flex;align-items:center;gap:20px;}
+  .plate .lk .t b{font-size:42px;font-weight:700;letter-spacing:-.02em;display:block;line-height:1;}
+  .plate .lk .t span{font-size:21px;font-weight:400;}
+  .plate.light .lk .t b,.plate.tint .lk .t b{color:var(--ink);} .plate.light .lk .t span,.plate.tint .lk .t span{color:var(--ink-3);}
+  .plate.deep .lk .t b{color:#fff;} .plate.deep .lk .t span{color:rgba(255,255,255,.65);}
+  .tag{position:absolute;top:18px;inset-inline-start:22px;font-family:var(--fm);font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:500;}
+  .plate.deep .tag{color:rgba(255,255,255,.55);}
+  .side-col{display:flex;flex-direction:column;gap:26px;}
+
+  /* COLOR */
+  .sw-grid{display:grid;grid-template-columns:1.4fr 1fr 1fr 1fr 1fr;gap:16px;flex:1;}
+  .sw{border-radius:20px;padding:28px 24px;display:flex;flex-direction:column;justify-content:space-between;min-height:470px;box-shadow:var(--shadow-card);}
+  .sw .nm{font-weight:700;font-size:26px;letter-spacing:-.01em;}
+  .sw .en{font-family:var(--fm);font-size:14px;opacity:.7;text-transform:uppercase;letter-spacing:.08em;margin-top:3px;font-weight:500;}
+  .sw .cd{font-family:var(--fm);font-size:15px;line-height:1.75;font-weight:500;}
+  .sw .cd .k{opacity:.55;}
+
+  /* TYPE */
+  .ty-grid{display:grid;grid-template-columns:1fr 1fr;gap:30px;flex:1;}
+  .ty{background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:40px 44px;display:flex;flex-direction:column;gap:16px;box-shadow:var(--shadow-card);}
+  .ty .top{display:flex;justify-content:space-between;align-items:baseline;}
+  .ty .nm{font-weight:700;font-size:33px;color:var(--ink);}
+  .ty.mono .nm{font-family:var(--fm);}
+  .ty .role{font-family:var(--fm);font-size:15px;letter-spacing:.14em;text-transform:uppercase;color:var(--primary);font-weight:600;}
+  .ty .spec{font-size:140px;line-height:.9;letter-spacing:-.03em;font-weight:800;color:var(--ink);}
+  .ty.mono .spec{font-family:var(--fm);font-weight:600;font-size:120px;letter-spacing:-.04em;}
+  .ty .scale{margin-top:auto;display:flex;flex-direction:column;gap:6px;}
+  .ty .ln{display:flex;justify-content:space-between;align-items:baseline;padding:9px 0;border-top:1px solid var(--border);}
+  .ty .ln .w{font-family:var(--fm);font-size:14px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.1em;font-weight:500;}
+  .ty .ln .d{font-size:24px;color:var(--ink);}
+
+  /* COMPONENTS */
+  .ui-plate{background:var(--surface);border-radius:22px;padding:38px;display:flex;flex-direction:column;gap:24px;border:1px solid var(--border);box-shadow:var(--shadow-card);}
+  .ui-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;}
+  .ui-label{font-family:var(--fm);font-size:14px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);width:160px;flex:0 0 auto;font-weight:500;}
+  .b{display:inline-flex;align-items:center;gap:9px;font-family:var(--f);font-weight:600;font-size:18px;border-radius:999px;padding:14px 26px;}
+  .b svg{width:19px;height:19px;}
+  .b.primary{background:var(--primary);color:#fff;box-shadow:var(--shadow-btn);}
+  .b.bright{background:var(--bright);color:#fff;}
+  .b.light{background:var(--surface);color:var(--ink);border:1.5px solid var(--border-2);}
+  .b.ghost{color:var(--ink-2);}
+  .ch{display:inline-flex;align-items:center;gap:8px;font-family:var(--f);font-weight:500;font-size:16px;padding:10px 20px;border-radius:999px;background:var(--surface);border:1.5px solid var(--border-2);color:var(--ink-2);}
+  .ch.on{background:var(--primary);color:#fff;border-color:var(--primary);}
+  .pl{display:inline-flex;align-items:center;gap:7px;font-family:var(--f);font-weight:600;font-size:15px;padding:8px 16px;border-radius:999px;}
+  .pl.s{background:var(--signal-50);color:var(--signal);} .pl.v{background:var(--p50);color:var(--primary);} .pl.a{background:var(--gold-50);color:var(--gold);}
+  .pl.s::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--signal);}
+  .fld{display:flex;align-items:center;gap:12px;background:var(--surface);border:1.5px solid var(--border-2);border-radius:14px;padding:14px 18px;color:var(--ink-3);font-family:var(--f);font-size:18px;min-width:330px;}
+  .fld svg{width:20px;height:20px;}
+  .prog{width:260px;height:10px;border-radius:999px;background:var(--p50);overflow:hidden;}
+  .prog>i{display:block;height:100%;width:63%;border-radius:999px;background:linear-gradient(90deg,var(--signal),#46D2AE);}
+
+  /* COURSE CARD */
+  .anat{display:grid;grid-template-columns:430px 1fr;gap:54px;flex:1;align-items:center;}
+  .cc{background:var(--surface);border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:var(--shadow-elev);}
+  .cc .th{height:190px;background:linear-gradient(150deg,var(--hero-from),var(--hero-to));position:relative;display:flex;align-items:center;justify-content:center;}
+  .cc .th svg{width:62px;height:62px;color:#fff;}
+  .cc .th .tr{position:absolute;top:16px;inset-inline-start:16px;inset-inline-end:16px;display:flex;justify-content:space-between;}
+  .cc .pg{background:rgba(255,255,255,.18);color:#fff;border-radius:999px;font-weight:600;font-size:14px;padding:6px 14px;font-family:var(--f);}
+  .cc .bd{padding:24px;}
+  .cc .cat{color:var(--primary);font-weight:600;font-size:15px;font-family:var(--f);margin-bottom:7px;}
+  .cc h3{font-family:var(--f);color:var(--ink);font-size:24px;font-weight:700;margin:0 0 9px;}
+  .cc p{font-family:var(--f);color:var(--ink-2);font-size:16px;line-height:1.5;margin:0 0 18px;}
+  .cc .mt{display:flex;gap:18px;color:var(--ink-3);font-size:15px;font-weight:500;font-family:var(--f);}
+  .cc .pr{height:9px;border-radius:999px;background:var(--p50);margin-top:18px;overflow:hidden;}
+  .cc .pr>i{display:block;height:100%;width:63%;background:linear-gradient(90deg,var(--signal),#46D2AE);border-radius:999px;}
+  .callouts{display:flex;flex-direction:column;gap:16px;}
+  .co{display:flex;gap:18px;align-items:flex-start;}
+  .co .dot{width:40px;height:40px;border-radius:12px;background:var(--p50);border:1px solid var(--p100);color:var(--primary);font-family:var(--fm);font-weight:600;display:flex;align-items:center;justify-content:center;flex:0 0 auto;font-size:18px;}
+  .co .tx b{font-size:23px;font-weight:700;display:block;color:var(--ink);}
+  .co .tx span{font-size:19px;color:var(--ink-2);}
+
+  /* ICONS */
+  .ico-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:18px;flex:1;}
+  .ico{background:var(--surface);border:1px solid var(--border);border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:24px;box-shadow:var(--shadow-card);}
+  .ico svg{width:38px;height:38px;color:var(--primary);stroke-width:1.8;}
+  .ico .nm{font-family:var(--fm);font-size:14px;color:var(--ink-3);letter-spacing:.04em;font-weight:500;}
+
+  /* CONTEXT */
+  .ctx{flex:1;display:grid;grid-template-columns:1.25fr 1fr;gap:28px;align-items:stretch;}
+  .frame{background:var(--bg);border-radius:22px;border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow-elev);position:relative;display:flex;align-items:center;}
+  .mini-hero{margin:30px;border-radius:22px;padding:42px;color:#fff;background:linear-gradient(140deg,var(--hero-from),#3F2A78 50%,var(--hero-to));position:relative;overflow:hidden;width:100%;box-sizing:border-box;}
+  .mini-hero .pl{background:rgba(255,255,255,.14);color:#fff;}
+  .mini-hero .pl::before{content:"";width:8px;height:8px;border-radius:50%;background:#46D2AE;}
+  .mini-hero h3{font-family:var(--f);font-weight:800;font-size:40px;line-height:1.06;letter-spacing:-.02em;margin:16px 0 12px;}
+  .mini-hero p{font-size:19px;color:rgba(255,255,255,.78);margin:0 0 24px;max-width:84%;}
+  .mini-hero .bb{display:inline-flex;gap:12px;}
+  .mini-hero .bw{background:#fff;color:var(--primary);font-weight:600;border-radius:999px;padding:13px 24px;font-size:17px;font-family:var(--f);display:inline-flex;align-items:center;gap:8px;}
+  .mini-hero .bo{background:rgba(255,255,255,.13);color:#fff;font-weight:600;border-radius:999px;padding:13px 24px;font-size:17px;font-family:var(--f);border:1px solid rgba(255,255,255,.25);}
+  .ctx-side{display:flex;flex-direction:column;gap:20px;}
+  .do-dont{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:30px;flex:1;box-shadow:var(--shadow-card);}
+  .do-dont .h{display:flex;align-items:center;gap:11px;font-weight:700;font-size:24px;margin-bottom:14px;}
+  .do-dont.do .h{color:var(--signal);} .do-dont.dont .h{color:#E0567B;}
+  .do-dont ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:11px;}
+  .do-dont li{font-size:20px;color:var(--ink-2);line-height:1.4;padding-inline-start:26px;position:relative;}
+  .do-dont li::before{content:"";position:absolute;inset-inline-start:0;top:11px;width:9px;height:9px;border-radius:50%;}
+  .do-dont.do li::before{background:var(--signal);} .do-dont.dont li::before{background:#E0567B;}
+
+  /* TOKENS */
+  .swatch-box{width:80px;height:80px;background:var(--surface);border:1px solid var(--border-2);}
+  .tok-shadow{width:104px;height:80px;background:var(--surface);border-radius:16px;}
+
+  /* CLOSING */
+  .close{background:linear-gradient(140deg,var(--hero-from) 0%,#3F2A78 48%,var(--hero-to) 100%);color:#fff;}
+  .close .gloss{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse 60% 50% at 86% 100%,rgba(255,255,255,.14),transparent 60%);}
+  .close .meta{color:rgba(255,255,255,.6);}.close .num{color:rgba(255,255,255,.5);}
+  .close .eyebrow{color:#C9B6FF;}.close .eyebrow::before{background:#46D2AE;}
+  .close h2{font-family:var(--f);font-weight:800;font-size:100px;line-height:.98;letter-spacing:-.03em;margin:0;color:#fff;}
+  .close h2 .ac{color:#C9B6FF;}
+  .close .words{display:flex;gap:38px;flex-wrap:wrap;font-weight:700;font-size:38px;color:rgba(255,255,255,.5);margin-top:34px;}
+  .close .words span.on{color:#fff;}
+  .divider{width:120px;height:3px;background:#46D2AE;border-radius:2px;}
+</style>
+</head>
+<body>
+<deck-stage width="1920" height="1080">
+
+<!-- 01 COVER -->
+<section data-label="01 Cover" data-screen-label="01" class="cover">
+  <div class="gloss"></div>
+  <div class="pad">
+    <header class="meta"><span class="eyebrow" style="color:#C9B6FF">DESIGN SYSTEM · 2026</span><span>DIGITECH HUB</span></header>
+    <main style="justify-content:flex-end;gap:0;">
+      <div class="lock">
+        <div class="badge" style="--s:74px;">
+          <i class="swoosh"></i>
+        </div>
+        <div class="t"><b>DigiTech<i class="hub">HUB</i></b><span>השכלה פרקטית</span></div>
+      </div>
+      <h1 style="margin-top:28px;">מערכת<br>עיצוב<span class="ac">.</span></h1>
+      <p class="sub">השפה הוויזואלית של מרכז הלמידה — בהירה, רגועה ומודרנית. צבע, טיפוגרפיה, רכיבים ודפוסים.</p>
+      <div class="chips"><span>CLARITY</span><span>CALM</span><span>MOMENTUM</span></div>
+    </main>
+    <footer class="meta"><span class="num">01 / 11</span><span>BRAND BOOK</span></footer>
+  </div>
+</section>
+
+<!-- 02 PRINCIPLES -->
+<section data-label="02 Principles" data-screen-label="02">
+  <div class="wash"></div>
+  <div class="pad">
+    <header class="meta"><span class="eyebrow">עקרונות · PRINCIPLES</span><span>03</span></header>
+    <main>
+      <h2 class="title" style="margin-bottom:38px;">מוצר שמרגיש <span style="color:var(--primary)">קל ללמוד בו</span> —<br>לפני שהוא מרגיש ״מעוצב״.</h2>
+      <div class="cols3">
+        <div class="pcard"><div class="pn">01</div><div class="pw">בהירות</div><div class="pe">CLARITY</div><div class="pb">היררכיה חדה, רווח נדיב, מסך אחד = משימה אחת. המשתמש תמיד יודע מה הצעד הבא.</div></div>
+        <div class="pcard"><div class="pn">02</div><div class="pw">רוגע</div><div class="pe">CALM</div><div class="pb">בסיס בהיר ושקט, סגול כמבטא ולא כרעש. צבע מופיע רק כשיש לו משמעות.</div></div>
+        <div class="pcard"><div class="pn">03</div><div class="pw">קצב</div><div class="pe">MOMENTUM</div><div class="pb">התקדמות גלויה תמיד — פסי התקדמות, צ׳קים בירוק, ״המשך מהמקום שעצרת״.</div></div>
+      </div>
+    </main>
+    <footer class="meta"><span class="num">02 / 11</span><span>PRODUCT PRINCIPLES</span></footer>
+  </div>
+</section>
+
+<!-- 03 LOGO -->
+<section data-label="03 Logo" data-screen-label="03">
+  <div class="pad">
+    <header class="meta"><span class="eyebrow">לוגו · LOGO &amp; BADGE</span><span>PRIMARY</span></header>
+    <main>
+      <div class="logo-grid">
+        <div class="plate light" style="flex-direction:column;gap:22px;">
+          <span class="tag">A · PRIMARY LOCKUP</span>
+          <i class="swoosh" style="width:230px;background:linear-gradient(118deg,#4B2E83,#6B3FE0);"></i>
+          <div class="wordmark"><b>DigiTech<i class="hub">HUB</i></b><span>השכלה פרקטית</span></div>
+        </div>
+        <div class="side-col">
+          <div class="plate deep" style="flex:1;">
+            <span class="tag">B · ON DEEP PURPLE</span>
+            <div class="lk">
+              <div class="badge" style="--s:62px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);box-shadow:none;"><i class="swoosh"></i></div>
+              <div class="t"><b>DigiTech<i class="hub">HUB</i></b><span>השכלה פרקטית</span></div>
+            </div>
+          </div>
+          <div class="plate tint" style="flex:1;justify-content:center;gap:30px;">
+            <span class="tag">C · BADGE / AVATAR</span>
+            <div class="badge" style="--s:70px;"><i class="swoosh"></i></div>
+            <div class="badge" style="--s:56px;border-radius:50%;"><span style="color:#fff;font-weight:700;font-size:26px;font-family:var(--f)">D</span></div>
+            <div class="badge" style="--s:34px;"><i class="swoosh"></i></div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <footer class="meta"><span class="num">03 / 11</span><span>DIGITECH WING · השכלה פרקטית</span></footer>
+  </div>
+</section>
+
+<!-- 04 COLOR -->
+<section data-label="04 Color" data-screen-label="04">
+  <div class="pad">
+    <header class="meta"><span class="eyebrow">צבע · COLOR</span><span>LIGHT UI · PURPLE BRAND · MINT SIGNAL</span></header>
+    <main>
+      <div class="sw-grid">
+        <div class="sw" style="background:var(--surface);color:var(--ink);border:1px solid var(--border);"><div><div class="nm">בסיס בהיר</div><div class="en" style="color:var(--ink-3);">SURFACE</div></div><div class="cd"><div><span class="k" style="color:var(--ink-3);">BG</span> #F7F6FB</div><div><span class="k" style="color:var(--ink-3);">CARD</span> #FFFFFF</div><div><span class="k" style="color:var(--ink-3);">USE</span> רקע · כרטיסים</div></div></div>
+        <div class="sw" style="background:#1C1430;color:#fff;"><div><div class="nm">דיו</div><div class="en">INK</div></div><div class="cd"><div><span class="k">HEX</span> #1C1430</div><div><span class="k">USE</span> טקסט ראשי</div></div></div>
+        <div class="sw" style="background:var(--primary);color:#fff;"><div><div class="nm">סגול ראשי</div><div class="en">BRAND</div></div><div class="cd"><div><span class="k">HEX</span> #4B2E83</div><div><span class="k">USE</span> כפתורים · Hero</div></div></div>
+        <div class="sw" style="background:var(--bright);color:#fff;"><div><div class="nm">סגול בהיר</div><div class="en">ACCENT</div></div><div class="cd"><div><span class="k">HEX</span> #6B3FE0</div><div><span class="k">USE</span> קישורים · פוקוס</div></div></div>
+        <div class="sw" style="background:var(--signal);color:#fff;"><div><div class="nm">ירוק מנטה</div><div class="en">SIGNAL</div></div><div class="cd"><div><span class="k">HEX</span> #1FB58A</div><div><span class="k">USE</span> התקדמות · LIVE</div></div></div>
+      </div>
+    </main>
+    <footer class="meta"><span class="num">04 / 11</span><span>WCAG AA TEXT PAIRS</span></footer>
+  </div>
+</section>
+
+<!-- 05 TYPE -->
+<section data-label="05 Typography" data-screen-label="05">
+  <div class="pad">
+    <header class="meta"><span class="eyebrow">טיפוגרפיה · TYPE</span><span>RUBIK · SPACE GROTESK</span></header>
+    <main>
+      <div class="ty-grid">
+        <div class="ty">
+          <div class="top"><div class="nm">Rubik</div><div class="role">UI · גוף + ממשק</div></div>
+          <div class="spec">אבגדה</div>
+          <div class="scale">
+            <div class="ln"><span class="w">800 · TITLE</span><span class="d" style="font-weight:800">בונים את העסק הבא</span></div>
+            <div class="ln"><span class="w">500 · UI</span><span class="d" style="font-weight:500">המשך ללמוד · קורסים</span></div>
+            <div class="ln"><span class="w">400 · BODY</span><span class="d" style="font-weight:400">מרכז הלמידה הפרקטי שלך</span></div>
+          </div>
+        </div>
+        <div class="ty mono">
+          <div class="top"><div class="nm">Space Grotesk</div><div class="role">מספרים · קודים</div></div>
+          <div class="spec">63%</div>
+          <div class="scale">
+            <div class="ln"><span class="w">NUMBERS · TNUM</span><span class="d" style="font-family:var(--fm);font-weight:600">12 / 19 · 04:12 · +30</span></div>
+            <div class="ln"><span class="w">LABELS · MONO</span><span class="d" style="font-family:var(--fm)">EP_08 · MODULE 3</span></div>
+            <div class="ln"><span class="w">USE</span><span class="d" style="color:var(--ink-3)">XP · זמן · אחוזים · תגים</span></div>
+          </div>
+        </div>
+      </div>
+    </main>
+    <footer class="meta"><span class="num">05 / 11</span><span>TYPE SYSTEM</span></footer>
+  </div>
+</section>
+
+<!-- 06 COMPONENTS -->
+<section data-label="06 Components" data-screen-label="06">
+  <div class="pad">
+    <header class="meta"><span class="eyebrow">רכיבים · COMPONENTS</span><span>BUTTONS · CHIPS · FIELDS</span></header>
+    <main>
+      <div class="ui-plate">
+        <div class="ui-row"><span class="ui-label">Buttons</span>
+          <span class="b primary">הירשם למועדון</span>
+          <span class="b bright">המשך ללמוד</span>
+          <span class="b light">גלה קורסים</span>
+          <span class="b ghost">התחבר</span>
+        </div>
+        <div class="ui-row"><span class="ui-label">Chips / Tabs</span>
+          <span class="ch on">הכל</span><span class="ch">בתהליך</span><span class="ch">שיווק</span><span class="ch">AI ואוטומציה</span><span class="ch">מכירות</span>
+        </div>
+        <div class="ui-row"><span class="ui-label">Status pills</span>
+          <span class="pl s">LIVE · ממשיכים</span><span class="pl v">פלייבוק</span><span class="pl a">חדש</span>
+        </div>
+        <div class="ui-row"><span class="ui-label">Field · Progress</span>
+          <span class="fld"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2" stroke-linecap="round"/></svg>חיפוש קורסים, מדריכים…</span>
+          <span class="prog"><i></i></span>
+        </div>
+      </div>
+    </main>
+    <footer class="meta"><span class="num">06 / 11</span><span>PILL CTAS · 14PX INPUTS · SOFT SHADOW</span></footer>
+  </div>
+</section>
+
+<!-- 07 COURSE CARD -->
+<section data-label="07 Course card" data-screen-label="07">
+  <div class="pad">
+    <header class="meta"><span class="eyebrow">כרטיס קורס · ANATOMY</span><span>CORE COMPONENT</span></header>
+    <main>
+      <div class="anat">
+        <div class="cc">
+          <div class="th"><div class="tr"><span class="pg">מיתוג</span><span class="pg">ממשיכים</span></div><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1.2" fill="#fff"/></svg></div>
+          <div class="bd">
+            <div class="cat">מיתוג</div>
+            <h3>בניית מותג מאפס</h3>
+            <p>משם, דרך לוגו ושפה ויזואלית ועד מערכת מותג שלמה.</p>
+            <div class="mt"><span>19 שיעורים</span><span>4ש 20ד</span><span>בינוני</span></div>
+            <div class="pr"><i></i></div>
+          </div>
+        </div>
+        <div class="callouts">
+          <div class="co"><div class="dot">1</div><div class="tx"><b>תמונה ממותגת</b><span>גרדיאנט סגול עמוק + אייקון קטגוריה לבן.</span></div></div>
+          <div class="co"><div class="dot">2</div><div class="tx"><b>קטגוריה + כותרת</b><span>קטגוריה בסגול, כותרת ב-Rubik 700.</span></div></div>
+          <div class="co"><div class="dot">3</div><div class="tx"><b>מטא-דאטה</b><span>שיעורים · זמן · רמה — אפור משני, קריא.</span></div></div>
+          <div class="co"><div class="dot">4</div><div class="tx"><b>התקדמות בירוק</b><span>פס התקדמות = סיגנל ההמשכיות של המשתמש.</span></div></div>
+        </div>
+      </div>
+    </main>
+    <footer class="meta"><span class="num">07 / 11</span><span>COURSE CARD</span></footer>
+  </div>
+</section>
+
+<!-- 08 ICONS -->
+<section data-label="08 Iconography" data-screen-label="08">
+  <div class="pad">
+    <header class="meta"><span class="eyebrow">אייקונוגרפיה · ICONS</span><span>1.8 STROKE · ROUNDED</span></header>
+    <main>
+      <div class="ico-grid">
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 11.5 12 4l9 7.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5 10v9a1 1 0 0 0 1 1h3v-6h6v6h3a1 1 0 0 0 1-1v-9" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="nm">דאשבורד</span></div>
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 6.5C10.5 5.2 8.4 4.5 6 4.5c-1 0-2 .1-3 .4v13c1-.3 2-.4 3-.4 2.4 0 4.5.7 6 2 1.5-1.3 3.6-2 6-2 1 0 2 .1 3 .4v-13c-1-.3-2-.4-3-.4-2.4 0-4.5.7-6 2Z" stroke-linejoin="round"/><path d="M12 6.5V20"/></svg><span class="nm">קורסים</span></div>
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="8.5"/><path d="m14.8 9.2-1.4 4.2-4.2 1.4 1.4-4.2 4.2-1.4Z" stroke-linejoin="round"/></svg><span class="nm">מדריכים</span></div>
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="3.5" width="16" height="17" rx="2.5"/><path d="M8.5 8.5h7M8.5 12h7M8.5 15.5h4" stroke-linecap="round"/></svg><span class="nm">פלייבוקים</span></div>
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="8.5"/><path d="M10 8.5v7l5.5-3.5z" fill="currentColor" stroke="none"/></svg><span class="nm">נגן</span></div>
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="nm">זמן</span></div>
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3.5 14.6 9l6 .5-4.6 4 1.4 5.9L12 16.6 6.6 19.4 8 13.5l-4.6-4 6-.5L12 3.5Z" stroke-linejoin="round"/></svg><span class="nm">דירוג</span></div>
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="8" r="5.5"/><path d="M8.5 12.5 7 21l5-2.8L17 21l-1.5-8.5" stroke-linejoin="round"/></svg><span class="nm">תעודה</span></div>
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12l5 5 9-11" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="nm">הושלם</span></div>
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="6" y="11" width="12" height="9" rx="2"/><path d="M9 11V8a3 3 0 0 1 6 0v3"/></svg><span class="nm">נעול</span></div>
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" stroke-linecap="round" stroke-linejoin="round"/></svg><span class="nm">הורדה</span></div>
+        <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 18v-3M10 18v-6M15 18v-9M20 18V6" stroke-linecap="round"/></svg><span class="nm">רמה</span></div>
+      </div>
+    </main>
+    <footer class="meta"><span class="num">08 / 11</span><span>LINE ICON SET</span></footer>
+  </div>
+</section>
+
+<!-- 09 IN CONTEXT -->
+<section data-label="09 In context" data-screen-label="09">
+  <div class="pad">
+    <header class="meta"><span class="eyebrow">ביישום · IN CONTEXT</span><span>HERO · DO &amp; DON'T</span></header>
+    <main>
+      <div class="ctx">
+        <div class="frame">
+          <div class="mini-hero">
+            <span class="pl">DigiTech HUB · השכלה פרקטית</span>
+            <h3>ברוך הבא ל-DigiTech<br><span style="color:#C9B6FF">HUB</span></h3>
+            <p>מרכז הלמידה שלך לקורסים, מדריכים ופלייבוקים פרקטיים.</p>
+            <div class="bb"><span class="bw"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" style="width:16px;height:16px"><path d="M14 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg>המשך ללמוד</span><span class="bo">גלה מדריכים</span></div>
+          </div>
+        </div>
+        <div class="ctx-side">
+          <div class="do-dont do"><div class="h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" style="width:26px;height:26px"><path d="M5 12l5 5 9-11" stroke-linecap="round" stroke-linejoin="round"/></svg>עשה</div>
+            <ul><li>בסיס בהיר, סגול לפעולות ול-Hero</li><li>ירוק רק להתקדמות, LIVE והצלחה</li><li>כפתורי CTA בצורת גלולה (Pill)</li></ul>
+          </div>
+          <div class="do-dont dont"><div class="h"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" style="width:26px;height:26px"><path d="M6 6l12 12M18 6 6 18" stroke-linecap="round"/></svg>אל תעשה</div>
+            <ul><li>גרדיאנטים צבעוניים מרובים ברקע</li><li>ירוק כצבע דקורטיבי כללי</li><li>צללים אפורים נייטרליים</li></ul>
+          </div>
+        </div>
+      </div>
+    </main>
+    <footer class="meta"><span class="num">09 / 11</span><span>APPLICATION</span></footer>
+  </div>
+</section>
+
+<!-- 10 TOKENS -->
+<section data-label="10 Tokens" data-screen-label="10">
+  <div class="pad">
+    <header class="meta"><span class="eyebrow">טוקנים · TOKENS</span><span>RADIUS · SHADOW · SPACING</span></header>
+    <main>
+      <div class="cols3">
+        <div class="pcard" style="min-height:0;justify-content:flex-start;gap:22px;">
+          <div class="pn">RADIUS</div>
+          <div style="display:flex;gap:14px;align-items:flex-end;">
+            <div class="swatch-box" style="border-radius:14px;"></div>
+            <div class="swatch-box" style="border-radius:20px;"></div>
+            <div class="swatch-box" style="border-radius:28px;"></div>
+            <div class="swatch-box" style="border-radius:50%;width:80px;"></div>
+          </div>
+          <div class="pb" style="margin-top:6px;font-size:20px;">14 · 20 · 28 · Pill<br>קלט → כרטיס → Hero → CTA</div>
+        </div>
+        <div class="pcard" style="min-height:0;justify-content:flex-start;gap:22px;">
+          <div class="pn">SHADOW</div>
+          <div style="display:flex;gap:18px;">
+            <div class="tok-shadow" style="box-shadow:var(--shadow-card);"></div>
+            <div class="tok-shadow" style="box-shadow:var(--shadow-elev);"></div>
+          </div>
+          <div class="pb" style="margin-top:6px;font-size:20px;">תמיד גוון סגול, לעולם לא אפור.<br>הגבהה ל-hover, Hero ומודאל.</div>
+        </div>
+        <div class="pcard" style="min-height:0;justify-content:flex-start;gap:18px;">
+          <div class="pn">SPACING</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="height:14px;width:25%;background:var(--violet);border-radius:4px;"></div>
+            <div style="height:14px;width:45%;background:var(--bright);border-radius:4px;"></div>
+            <div style="height:14px;width:68%;background:var(--primary);border-radius:4px;"></div>
+            <div style="height:14px;width:90%;background:var(--hero-from);border-radius:4px;"></div>
+          </div>
+          <div class="pb" style="margin-top:6px;font-size:20px;">סקאלת 4px · 8 / 16 / 24 / 40.<br>רווח נדיב = בהירות.</div>
+        </div>
+      </div>
+    </main>
+    <footer class="meta"><span class="num">10 / 11</span><span>SYSTEM TOKENS</span></footer>
+  </div>
+</section>
+
+<!-- 11 CLOSING -->
+<section data-label="11 Closing" data-screen-label="11" class="close">
+  <div class="gloss"></div>
+  <div class="pad">
+    <header class="meta"><span class="eyebrow">סיכום · ONE LINE</span><span>END OF BOOK</span></header>
+    <main>
+      <div class="divider"></div>
+      <h2 style="margin-top:38px;">מערכת שגורמת<br>ללמידה להרגיש <span class="ac">פשוטה</span>.</h2>
+      <div class="words"><span class="on">בהירה.</span><span class="on">רגועה.</span><span class="on">מודרנית.</span><span>פרקטית.</span></div>
+    </main>
+    <footer class="meta"><span>DIGITECH HUB · DESIGN SYSTEM · 2026</span><span class="num">11 / 11</span></footer>
+  </div>
+</section>
+
+</deck-stage>
+<script src="deck-stage.js"></script>
+</body>
+</html>

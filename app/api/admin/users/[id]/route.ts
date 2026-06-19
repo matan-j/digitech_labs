@@ -6,8 +6,8 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
   await requireAdmin();
   const { id } = await ctx.params;
   const body = await request.json().catch(() => ({}));
-  const role: 'admin' | 'subscriber' | undefined = body.role;
-  if (role !== 'admin' && role !== 'subscriber') {
+  const role: 'admin' | 'subscriber' | 'creator' | undefined = body.role;
+  if (role !== 'admin' && role !== 'subscriber' && role !== 'creator') {
     return NextResponse.json({ error: 'invalid_role' }, { status: 400 });
   }
 

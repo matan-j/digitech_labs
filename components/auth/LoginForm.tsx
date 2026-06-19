@@ -101,7 +101,7 @@ export default function LoginForm({ returnTo }: { returnTo?: string }) {
         ) : (
           <GoogleGIcon className="w-4 h-4" />
         )}
-        <span>המשך עם Google</span>
+        <span>התחברות עם Google</span>
       </button>
 
       {/* Divider */}

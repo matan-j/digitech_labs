@@ -2,14 +2,16 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, BookOpen, Compass, BookText, Users, Palette } from 'lucide-react';
+import { LayoutDashboard, BookOpen, Compass, BookText, Users, Palette, Tags, Sparkles } from 'lucide-react';
 
 const NAV = [
   { href: '/admin', label: 'דאשבורד', Icon: LayoutDashboard, exact: true },
   { href: '/admin/courses', label: 'קורסים', Icon: BookOpen, exact: false },
   { href: '/admin/guides', label: 'מדריכים', Icon: Compass, exact: false },
   { href: '/admin/playbooks', label: 'פלייבוקים', Icon: BookText, exact: false },
+  { href: '/admin/taxonomy', label: 'תחומים וקטגוריות', Icon: Tags, exact: false },
   { href: '/admin/users', label: 'משתמשים', Icon: Users, exact: false },
+  { href: '/admin/creators', label: 'יוצרים', Icon: Sparkles, exact: false },
   { href: '/admin/brand', label: 'מותג', Icon: Palette, exact: false },
 ] as const;
 

@@ -16,7 +16,7 @@ type Body = {
   email?: string;
   password?: string;
   full_name?: string;
-  role?: 'admin' | 'subscriber';
+  role?: 'admin' | 'subscriber' | 'creator';
   subscription_status?: 'active' | 'cancelled' | 'past_due' | 'none';
 };
 
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       { status: 400 }
     );
   }
-  if (role !== 'admin' && role !== 'subscriber') {
+  if (role !== 'admin' && role !== 'subscriber' && role !== 'creator') {
     return NextResponse.json({ error: 'invalid_role' }, { status: 400 });
   }
   if (!['active', 'cancelled', 'past_due', 'none'].includes(subscriptionStatus)) {

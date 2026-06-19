@@ -12,6 +12,7 @@ const NAV = [
   { label: 'קורסים', href: '/learn/courses' },
   { label: 'מדריכים', href: '/learn/guides' },
   { label: 'פלייבוקים', href: '/learn/playbooks' },
+  { label: 'יוצרים', href: '/learn/creators' },
 ];
 
 export default function MobileTopBar({
@@ -26,30 +27,43 @@ export default function MobileTopBar({
 
   return (
     <>
-      <header className="lg:hidden fixed top-0 inset-x-0 z-30 h-14 bg-white border-b border-brand-purple-200 flex items-center justify-between px-4">
+      <header
+        className="lg:hidden fixed top-0 inset-x-0 z-30 h-14 text-white flex items-center justify-between px-4"
+        style={{
+          backgroundImage:
+            'linear-gradient(180deg, #1A0F3D 0%, #2E1A5C 100%)',
+        }}
+      >
         <button
           type="button"
           aria-label="פתח תפריט"
           onClick={() => setOpen(true)}
-          className="p-2 -mr-2 rounded-md hover:bg-brand-purple-50 text-neutral-700"
+          className="p-2 -mr-2 rounded-pill hover:bg-white/8 text-white/85"
         >
           <Menu className="w-5 h-5" />
         </button>
         <Link href="/learn" className="flex items-center gap-2">
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={logoUrl} alt="Digitech" className="w-7 h-7 rounded-pill object-cover" />
+            <img src={logoUrl} alt="DigiTech" className="w-7 h-7 rounded-pill object-cover" />
           ) : (
-            <div className="w-7 h-7 rounded-pill bg-brand-purple-700 flex items-center justify-center text-white font-bold text-xs">
-              D
-            </div>
+            <span
+              className="brand-badge"
+              style={{ ['--s' as never]: '28px' }}
+              aria-hidden
+            >
+              <span className="swoosh" />
+            </span>
           )}
-          <span className="font-extrabold text-neutral-950 text-sm">Digitech</span>
+          <span className="font-extrabold text-white text-sm">
+            DigiTech
+            <span className="text-brand-teal-bright text-[9px] tracking-wider mr-1">HUB</span>
+          </span>
         </Link>
         <Link
           href={auth ? '/account' : '/login'}
           aria-label={auth ? 'החשבון שלי' : 'התחבר'}
-          className="p-2 -ml-2 rounded-md hover:bg-brand-purple-50 text-neutral-700 text-xs font-semibold"
+          className="p-2 -ml-2 rounded-pill text-white/85 text-xs font-semibold hover:bg-white/8"
         >
           {auth ? (auth.profile.full_name ?? auth.email).charAt(0).toUpperCase() : 'כניסה'}
         </Link>
@@ -61,26 +75,42 @@ export default function MobileTopBar({
             type="button"
             aria-label="סגור"
             onClick={() => setOpen(false)}
-            className="flex-1 bg-neutral-950/40"
+            className="flex-1 bg-brand-purple-950/60 backdrop-blur-sm"
           />
-          <nav className="w-72 bg-white h-full flex flex-col border-l border-brand-purple-200">
-            <div className="px-4 py-4 flex items-center justify-between border-b border-brand-purple-200">
-              <Link href="/learn" onClick={() => setOpen(false)} className="flex items-center gap-2">
+          <nav
+            className="w-72 h-full flex flex-col text-white"
+            style={{
+              backgroundImage:
+                'linear-gradient(180deg, #1A0F3D 0%, #2E1A5C 60%, #2A1654 100%)',
+            }}
+          >
+            <div className="px-4 py-5 flex items-center justify-between border-b border-white/8">
+              <Link href="/learn" onClick={() => setOpen(false)} className="flex items-center gap-2.5">
                 {logoUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={logoUrl} alt="Digitech" className="w-7 h-7 rounded-pill object-cover" />
+                  <img src={logoUrl} alt="DigiTech" className="w-9 h-9 rounded-pill object-cover" />
                 ) : (
-                  <div className="w-7 h-7 rounded-pill bg-brand-purple-700 flex items-center justify-center text-white font-bold text-xs">
-                    D
-                  </div>
+                  <span
+                    className="brand-badge"
+                    style={{ ['--s' as never]: '36px' }}
+                    aria-hidden
+                  >
+                    <span className="swoosh" />
+                  </span>
                 )}
-                <span className="font-extrabold text-neutral-950">Digitech</span>
+                <div className="flex flex-col leading-tight">
+                  <span className="font-extrabold text-white">
+                    DigiTech
+                    <span className="text-brand-teal-bright text-[9px] tracking-wider mr-1">HUB</span>
+                  </span>
+                  <span className="text-[11px] text-white/55">השכלה פרקטית</span>
+                </div>
               </Link>
               <button
                 type="button"
                 aria-label="סגור"
                 onClick={() => setOpen(false)}
-                className="p-1 rounded-md hover:bg-brand-purple-50 text-neutral-700"
+                className="p-1 rounded-pill hover:bg-white/8 text-white/70"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -98,8 +128,8 @@ export default function MobileTopBar({
                       className={[
                         'block px-3.5 py-2.5 rounded-pill text-sm font-medium transition-colors',
                         isActive
-                          ? 'bg-brand-purple-100 text-brand-purple-900'
-                          : 'text-neutral-700 hover:bg-brand-purple-50',
+                          ? 'bg-white/12 text-white'
+                          : 'text-white/65 hover:bg-white/8 hover:text-white',
                       ].join(' ')}
                     >
                       {it.label}
@@ -109,28 +139,28 @@ export default function MobileTopBar({
               })}
 
               {auth?.profile.role === 'admin' && (
-                <li className="pt-4 mt-4 border-t border-brand-purple-200">
+                <li className="pt-4 mt-4 border-t border-white/10">
                   <Link
                     href="/admin"
                     onClick={() => setOpen(false)}
-                    className="block px-3.5 py-2.5 rounded-pill text-sm font-medium text-neutral-700 hover:bg-brand-purple-50"
+                    className="block px-3.5 py-2.5 rounded-pill text-sm font-medium text-white/65 hover:bg-white/8 hover:text-white"
                   >
                     ניהול תוכן
                   </Link>
                 </li>
               )}
             </ul>
-            <div className="px-3 py-4 border-t border-brand-purple-200 space-y-2">
+            <div className="px-3 py-4 border-t border-white/8 space-y-2">
               {auth ? (
                 <>
                   <Link
                     href="/account"
                     onClick={() => setOpen(false)}
-                    className="block w-full text-center px-3 py-2.5 rounded-pill bg-brand-purple-700 text-white text-sm font-semibold"
+                    className="block w-full text-center px-3 py-2.5 rounded-pill bg-white text-brand-purple-700 text-sm font-bold"
                   >
                     החשבון שלי
                   </Link>
-                  <LogoutButton className="block w-full text-center px-3 py-2 rounded-pill border border-brand-purple-200 text-neutral-700 text-sm font-medium">
+                  <LogoutButton className="block w-full text-center px-3 py-2 rounded-pill border border-white/15 text-white/75 text-sm font-medium">
                     התנתק
                   </LogoutButton>
                 </>
@@ -139,14 +169,14 @@ export default function MobileTopBar({
                   <Link
                     href="/upgrade"
                     onClick={() => setOpen(false)}
-                    className="block w-full text-center px-3 py-2.5 rounded-pill bg-brand-purple-700 text-white text-sm font-semibold"
+                    className="block w-full text-center px-3 py-2.5 rounded-pill bg-white text-brand-purple-700 text-sm font-bold"
                   >
                     הירשם למועדון
                   </Link>
                   <Link
                     href="/login"
                     onClick={() => setOpen(false)}
-                    className="block w-full text-center px-3 py-2 rounded-pill border border-brand-purple-200 text-neutral-700 text-sm font-medium"
+                    className="block w-full text-center px-3 py-2 rounded-pill border border-white/15 text-white/80 text-sm font-medium"
                   >
                     התחבר
                   </Link>

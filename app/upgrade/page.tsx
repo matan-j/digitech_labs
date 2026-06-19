@@ -27,7 +27,7 @@ export default async function UpgradePage({ searchParams }: Props) {
   }
 
   return (
-    <main className="min-h-screen bg-brand-purple-50 px-4 py-10">
+    <main className="min-h-screen px-4 py-10" style={{ backgroundColor: 'var(--color-bg-main)' }}>
       <div className="max-w-xl mx-auto">
         <Link href="/learn" className="text-sm text-brand-purple-700 hover:text-brand-purple-800 font-medium">
           ← חזרה ל-Hub

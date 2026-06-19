@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowRight } from 'lucide-react';
-import { getGuide } from '@/lib/learn/db';
+import { getGuide, listCreators } from '@/lib/learn/db';
 import GuideEditor from '@/components/learn-admin/GuideEditor';
 
 export const dynamic = 'force-dynamic';
@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function GuideEditPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const guide = await getGuide(slug);
+  const [guide, creators] = await Promise.all([getGuide(slug), listCreators()]);
   if (!guide) notFound();
 
   return (
@@ -23,7 +23,7 @@ export default async function GuideEditPage({ params }: { params: Promise<{ slug
         <ArrowRight className="w-3.5 h-3.5" />
         חזרה לרשימת מדריכים
       </Link>
-      <GuideEditor initial={guide} />
+      <GuideEditor initial={guide} mode="admin" creators={creators.map((c) => ({ id: c.id, name: c.name }))} />
     </div>
   );
 }

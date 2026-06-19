@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
-import type { ContentType } from '@/lib/learn/types';
+import type { ContentType, GuideContentKind } from '@/lib/learn/types';
+import { resolveWriteActor, validateContentUrl } from '@/lib/learn/content-write';
 
 const VALID_TYPES: ContentType[] = ['course', 'guide'];
 
@@ -16,15 +16,29 @@ function slugify(input: string): string {
 }
 
 export async function POST(request: Request, ctx: { params: Promise<{ type: string }> }) {
-  const { profile } = await requireAdmin();
+  const actor = await resolveWriteActor();
+  if (actor.kind === 'none') {
+    return NextResponse.json({ error: 'forbidden' }, { status: 403 });
+  }
   const { type } = await ctx.params;
   if (!VALID_TYPES.includes(type as ContentType)) {
     return NextResponse.json({ error: 'invalid_type' }, { status: 400 });
+  }
+  // Creators may only create guides, owned by themselves.
+  if (actor.kind === 'creator' && type !== 'guide') {
+    return NextResponse.json({ error: 'forbidden' }, { status: 403 });
   }
 
   const body = await request.json().catch(() => ({}));
   const title = (body.title ?? '').trim();
   if (!title) return NextResponse.json({ error: 'title_required' }, { status: 400 });
+
+  // Validate guide content_url against its kind.
+  const contentKind = (body.content_kind ?? null) as GuideContentKind | null;
+  const urlCheck = validateContentUrl(contentKind, body.content_url);
+  if (!urlCheck.ok) {
+    return NextResponse.json({ error: 'invalid_video_url', message: urlCheck.message }, { status: 400 });
+  }
 
   let slug = (body.slug ?? '').trim() || slugify(title);
   if (!slug) slug = `untitled-${Date.now()}`;
@@ -43,6 +57,12 @@ export async function POST(request: Request, ctx: { params: Promise<{ type: stri
     candidate = `${slug}-${n}`;
   }
 
+  // Creator is forced to own the row; admin may assign any creator_id.
+  const creatorId =
+    actor.kind === 'creator' ? actor.creatorId : (body.creator_id ?? null);
+  // is_featured is admin-only.
+  const isFeatured = actor.kind === 'admin' ? (body.is_featured ?? false) : false;
+
   const insert = {
     type,
     slug: candidate,
@@ -54,9 +74,20 @@ export async function POST(request: Request, ctx: { params: Promise<{ type: stri
     audience: body.audience ?? null,
     tags: body.tags ?? [],
     status: 'draft' as const,
-    is_premium: body.is_premium ?? true,
+    is_premium: body.is_premium ?? false,
     body: body.body ?? (type === 'guide' ? [] : null),
-    created_by: profile.id,
+    created_by: actor.userId,
+    updated_by: actor.userId,
+    video_url: body.video_url ?? null,
+    domain: body.domain ?? null,
+    creator_id: creatorId,
+    content_kind: type === 'guide' ? (contentKind ?? 'article') : null,
+    content_url: urlCheck.value,
+    duration_minutes: body.duration_minutes ?? null,
+    is_featured: isFeatured,
+    seo_title: body.seo_title ?? null,
+    seo_description: body.seo_description ?? null,
+    og_image_url: body.og_image_url ?? null,
   };
 
   const { data, error } = await supabase
@@ -67,6 +98,17 @@ export async function POST(request: Request, ctx: { params: Promise<{ type: stri
   if (error) {
     console.error('[content:create]', error);
     return NextResponse.json({ error: 'create_failed', message: error.message }, { status: 500 });
+  }
+
+  // Optional: attach categories on create
+  if (Array.isArray(body.category_ids) && body.category_ids.length > 0 && data) {
+    const rows = body.category_ids
+      .filter((id: unknown): id is string => typeof id === 'string' && id.length > 0)
+      .map((category_id: string) => ({ content_item_id: data.id, category_id }));
+    if (rows.length > 0) {
+      const { error: cErr } = await supabase.from('content_item_categories').insert(rows);
+      if (cErr) console.error('[content:create:categories]', cErr);
+    }
   }
 
   return NextResponse.json({ item: data });

@@ -1,10 +1,10 @@
 import Link from 'next/link';
 import { listContent, progressByCourse } from '@/lib/learn/db';
 import { getCurrentUser, hasPremiumAccess } from '@/lib/auth';
-import { ArrowLeft, Lock } from 'lucide-react';
+import { ArrowLeft, Lock, BookOpen } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'קורסים — Digitech Learning Hub' };
+export const metadata = { title: 'קורסים · DigiTech HUB' };
 
 export default async function CoursesIndexPage() {
   const [items, auth] = await Promise.all([listContent('course'), getCurrentUser()]);
@@ -13,16 +13,23 @@ export default async function CoursesIndexPage() {
   const progress = auth ? await progressByCourse(auth.userId) : {};
 
   return (
-    <div className="px-4 sm:px-6 lg:px-10 py-6 lg:py-8 max-w-6xl mx-auto">
-      <header className="mb-6">
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-950">קורסים</h1>
-        <p className="text-neutral-500 mt-1">
+    <div className="px-4 sm:px-6 lg:px-10 py-6 lg:py-10 max-w-6xl mx-auto">
+      <header className="mb-8">
+        <div className="flex items-center gap-2 mb-2.5">
+          <BookOpen className="w-4 h-4 text-brand-purple-700" />
+          <span className="text-[11px] font-extrabold text-brand-purple-700 uppercase tracking-[0.18em]">קורסים</span>
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-neutral-950">עולם של קורסים מחכה לך</h1>
+        <p className="text-sm text-neutral-700 mt-1.5">
           {visible.length === 0 ? 'אין עדיין קורסים מפורסמים' : `${visible.length} קורסים זמינים`}
         </p>
       </header>
 
       {visible.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-neutral-200 p-12 text-center">
+        <div
+          className="bg-white rounded-card border border-neutral-200 p-12 text-center"
+          style={{ boxShadow: 'var(--shadow-card)' }}
+        >
           <p className="text-neutral-500">בדוק שוב בקרוב — קורסים חדשים בדרך.</p>
         </div>
       ) : (
@@ -35,31 +42,37 @@ export default async function CoursesIndexPage() {
               <Link
                 key={c.id}
                 href={`/learn/courses/${c.slug}`}
-                className="group block bg-white rounded-xl border border-neutral-200 hover:border-brand-purple-300 hover:shadow-md transition-all overflow-hidden"
+                className="group block bg-white rounded-card border border-neutral-200 hover:border-brand-purple-700 transition-all overflow-hidden"
+                style={{ boxShadow: 'var(--shadow-card)' }}
               >
                 <div
-                  className={[
-                    'aspect-[16/9] relative',
-                    c.cover_style === 'header' ? 'bg-brand-purple-900' : 'bg-brand-purple-700',
-                  ].join(' ')}
+                  className="aspect-[16/9] relative bg-brand-purple-900"
                   style={
                     c.cover_url
                       ? { backgroundImage: `url(${c.cover_url})`, backgroundSize: 'cover', backgroundPosition: 'center' }
                       : c.cover_style === 'header'
-                        ? { backgroundImage: 'linear-gradient(180deg, #1A0F3D 0%, #3D2678 100%)' }
-                        : { backgroundImage: 'linear-gradient(135deg, #2E1A5C 0%, #4A2E8F 60%, #5B3AAE 100%)' }
+                        ? { backgroundImage: 'linear-gradient(180deg, #1A0F3D 0%, #3F2A78 100%)' }
+                        : { backgroundImage: 'linear-gradient(135deg, #2E1A5C 0%, #4B2E83 60%, #5F3E9C 100%)' }
                   }
                 >
+                  <div
+                    aria-hidden
+                    className="absolute inset-0 opacity-35"
+                    style={{
+                      backgroundImage:
+                        'radial-gradient(circle at 80% 25%, rgba(196,184,230,0.30), transparent 55%), radial-gradient(circle at 18% 88%, rgba(26,15,61,0.55), transparent 55%)',
+                    }}
+                  />
                   <div className="absolute inset-0 p-5 flex flex-col justify-end">
                     {c.audience && (
-                      <span className="self-start inline-flex items-center text-[11px] font-semibold uppercase tracking-wider text-brand-purple-100 bg-white/10 backdrop-blur-sm px-2 py-1 rounded-pill">
+                      <span className="self-start inline-flex items-center text-[11px] font-semibold uppercase tracking-wider text-white/85 bg-white/12 backdrop-blur-sm px-2.5 py-1 rounded-pill">
                         {c.audience}
                       </span>
                     )}
-                    <h3 className="mt-2 text-white font-extrabold text-lg leading-tight line-clamp-2">{c.title}</h3>
+                    <h3 className="mt-2.5 text-white font-extrabold text-lg leading-tight line-clamp-2">{c.title}</h3>
                   </div>
                   {locked && (
-                    <div className="absolute top-3 right-3 bg-white rounded-pill px-2 py-1 flex items-center gap-1 text-[10px] font-semibold text-brand-purple-800">
+                    <div className="absolute top-3 right-3 bg-white rounded-pill px-2 py-1 flex items-center gap-1 text-[10px] font-bold text-brand-purple-700">
                       <Lock className="w-3 h-3" />
                       פרימיום
                     </div>
@@ -68,23 +81,29 @@ export default async function CoursesIndexPage() {
 
                 <div className="p-5">
                   {c.tagline && (
-                    <p className="text-sm text-neutral-500 line-clamp-2 mb-3 min-h-[2.6em]">{c.tagline}</p>
+                    <p className="text-sm text-neutral-500 line-clamp-2 mb-4 min-h-[2.6em]">{c.tagline}</p>
                   )}
                   {cp && cp.total > 0 && (
-                    <div className="mb-3">
-                      <div className="flex items-center justify-between text-[11px] text-neutral-500 mb-1">
-                        <span>{cp.done} / {cp.total} שיעורים</span>
-                        <span className="font-semibold tabular-nums">{pct}%</span>
+                    <div className="mb-4">
+                      <div className="flex items-center justify-between text-[11px] text-neutral-500 mb-1.5">
+                        <span className="tabular-nums">{cp.done} / {cp.total} שיעורים</span>
+                        <span className="font-bold tabular-nums" style={{ color: 'var(--color-signal)' }}>{pct}%</span>
                       </div>
-                      <div className="h-1.5 rounded-pill bg-neutral-100 overflow-hidden">
-                        <div className="h-full bg-brand-purple-700 rounded-pill transition-all" style={{ width: `${pct}%` }} />
+                      <div
+                        className="h-1.5 rounded-pill overflow-hidden"
+                        style={{ backgroundColor: 'var(--color-brand-purple-50)' }}
+                      >
+                        <div
+                          className="h-full rounded-pill transition-all"
+                          style={{ width: `${pct}%`, backgroundImage: 'var(--grad-progress)' }}
+                        />
                       </div>
                     </div>
                   )}
                   <div className="flex items-center justify-end">
-                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-purple-700 group-hover:text-brand-purple-600 transition-colors">
+                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-purple-700 group-hover:text-brand-purple-500 transition-colors">
                       {locked ? 'הצטרף' : pct > 0 ? 'המשך' : 'התחל'}
-                      <ArrowLeft className="w-4 h-4" />
+                      <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-0.5" />
                     </span>
                   </div>
                 </div>

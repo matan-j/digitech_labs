@@ -16,7 +16,7 @@ export default async function UpgradeSuccessPage({ searchParams }: Props) {
   // we trust the user just paid and show success. The DB will catch up.
 
   return (
-    <main className="min-h-screen bg-brand-purple-50 px-4 py-10 flex items-center">
+    <main className="min-h-screen px-4 py-10 flex items-center" style={{ backgroundColor: 'var(--color-bg-main)' }}>
       <div className="max-w-md mx-auto bg-white rounded-2xl border border-neutral-200 p-8 shadow-sm text-center">
         <div className="w-16 h-16 mx-auto mb-4 rounded-pill bg-emerald-100 flex items-center justify-center text-3xl">
           🎉

@@ -9,7 +9,7 @@ export default function GlobalError({ error, reset }: { error: Error & { digest?
   }, [error]);
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-center bg-brand-purple-50 px-4 text-center">
+    <main className="min-h-screen flex flex-col items-center justify-center px-4 text-center" style={{ backgroundColor: 'var(--color-bg-main)' }}>
       <div className="max-w-md">
         <p className="text-6xl mb-3">⚠️</p>
         <h1 className="text-2xl font-extrabold text-neutral-950 mb-2">משהו השתבש</h1>

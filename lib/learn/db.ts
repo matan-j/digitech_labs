@@ -13,7 +13,13 @@ import type {
   GuideItem,
   ModuleWithChildren,
   Playbook,
+  CategoryRef,
+  Creator,
+  CreatorRef,
+  CreatorStats,
+  Playlist,
 } from './types';
+import type { Category } from './domains';
 
 // ============================================================
 // Reads — go through the request-scoped (RLS-aware) client
@@ -25,6 +31,38 @@ async function db() {
 
 // ----- Content items -----
 
+// We fetch the junction → categories separately rather than via PostgREST
+// nested embed. The embed path is finicky after schema migrations (cache
+// reloads, FK resolution through many-to-many), and a second small query
+// is more robust and easier to debug.
+async function attachContentCategories<T extends { id: string }>(
+  supabase: Awaited<ReturnType<typeof db>>,
+  items: T[],
+): Promise<Array<T & { categories: CategoryRef[] }>> {
+  if (items.length === 0) return items.map((i) => ({ ...i, categories: [] as CategoryRef[] }));
+  const ids = items.map((i) => i.id);
+  const { data, error } = await supabase
+    .from('content_item_categories')
+    .select('content_item_id, categories ( id, slug, name, domain )')
+    .in('content_item_id', ids);
+  if (error) {
+    console.error('[attachContentCategories]', error);
+    return items.map((i) => ({ ...i, categories: [] as CategoryRef[] }));
+  }
+  const byId = new Map<string, CategoryRef[]>();
+  type JunctionRow = { content_item_id: string; categories: CategoryRef | CategoryRef[] | null };
+  for (const row of (data ?? []) as unknown as JunctionRow[]) {
+    // Supabase may return the embedded record as an object OR a 1-element array
+    // depending on its FK introspection. Normalize.
+    const cat = Array.isArray(row.categories) ? row.categories[0] : row.categories;
+    if (!cat) continue;
+    const arr = byId.get(row.content_item_id) ?? [];
+    arr.push(cat);
+    byId.set(row.content_item_id, arr);
+  }
+  return items.map((i) => ({ ...i, categories: byId.get(i.id) ?? [] }));
+}
+
 export async function listContent(type: ContentType): Promise<ContentItem[]> {
   const supabase = await db();
   const { data, error } = await supabase
@@ -34,7 +72,8 @@ export async function listContent(type: ContentType): Promise<ContentItem[]> {
     .order('published_at', { ascending: false, nullsFirst: false })
     .order('updated_at', { ascending: false });
   if (error) throw error;
-  return (data ?? []) as ContentItem[];
+  const rows = (data ?? []) as ContentItem[];
+  return await attachContentCategories(supabase, rows);
 }
 
 export async function getContentBySlug(type: ContentType, slug: string): Promise<ContentItem | null> {
@@ -46,7 +85,9 @@ export async function getContentBySlug(type: ContentType, slug: string): Promise
     .eq('slug', slug)
     .maybeSingle();
   if (error) throw error;
-  return data as ContentItem | null;
+  if (!data) return null;
+  const [row] = await attachContentCategories(supabase, [data as ContentItem]);
+  return row;
 }
 
 export async function getContentById(id: string): Promise<ContentItem | null> {
@@ -239,14 +280,42 @@ export async function getGuide(slug: string): Promise<GuideItem | null> {
 
 // ----- Playbooks -----
 
+async function attachPlaybookCategories<T extends { id: string }>(
+  supabase: Awaited<ReturnType<typeof db>>,
+  items: T[],
+): Promise<Array<T & { categories: CategoryRef[] }>> {
+  if (items.length === 0) return items.map((i) => ({ ...i, categories: [] as CategoryRef[] }));
+  const ids = items.map((i) => i.id);
+  const { data, error } = await supabase
+    .from('playbook_categories')
+    .select('playbook_id, categories ( id, slug, name, domain )')
+    .in('playbook_id', ids);
+  if (error) {
+    console.error('[attachPlaybookCategories]', error);
+    return items.map((i) => ({ ...i, categories: [] as CategoryRef[] }));
+  }
+  const byId = new Map<string, CategoryRef[]>();
+  type JunctionRow = { playbook_id: string; categories: CategoryRef | CategoryRef[] | null };
+  for (const row of (data ?? []) as unknown as JunctionRow[]) {
+    const cat = Array.isArray(row.categories) ? row.categories[0] : row.categories;
+    if (!cat) continue;
+    const arr = byId.get(row.playbook_id) ?? [];
+    arr.push(cat);
+    byId.set(row.playbook_id, arr);
+  }
+  return items.map((i) => ({ ...i, categories: byId.get(i.id) ?? [] }));
+}
+
 export async function listPlaybooks(): Promise<Playbook[]> {
   const supabase = await db();
   const { data, error } = await supabase
     .from('playbooks')
     .select('*')
+    .order('published_at', { ascending: false, nullsFirst: false })
     .order('created_at', { ascending: false });
   if (error) throw error;
-  return (data ?? []) as Playbook[];
+  const rows = (data ?? []) as Playbook[];
+  return await attachPlaybookCategories(supabase, rows);
 }
 
 export async function getPlaybook(id: string): Promise<Playbook | null> {
@@ -257,7 +326,22 @@ export async function getPlaybook(id: string): Promise<Playbook | null> {
     .eq('id', id)
     .maybeSingle();
   if (error) throw error;
-  return data as Playbook | null;
+  if (!data) return null;
+  const [row] = await attachPlaybookCategories(supabase, [data as Playbook]);
+  return row;
+}
+
+export async function getPlaybookBySlug(slug: string): Promise<Playbook | null> {
+  const supabase = await db();
+  const { data, error } = await supabase
+    .from('playbooks')
+    .select('*')
+    .eq('slug', slug)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  const [row] = await attachPlaybookCategories(supabase, [data as Playbook]);
+  return row;
 }
 
 export async function listPlaybooksForCourse(courseId: string): Promise<Playbook[]> {
@@ -269,7 +353,22 @@ export async function listPlaybooksForCourse(courseId: string): Promise<Playbook
     .eq('source_id', courseId)
     .order('created_at', { ascending: false });
   if (error) throw error;
-  return (data ?? []) as Playbook[];
+  const rows = (data ?? []) as Playbook[];
+  return await attachPlaybookCategories(supabase, rows);
+}
+
+// ----- Categories taxonomy -----
+
+export async function listCategories(): Promise<Category[]> {
+  const supabase = await db();
+  const { data, error } = await supabase
+    .from('categories')
+    .select('*')
+    .order('domain', { ascending: true })
+    .order('sort_order', { ascending: true })
+    .order('name', { ascending: true });
+  if (error) throw error;
+  return (data ?? []) as Category[];
 }
 
 // ----- Progress (server-side replacement for localStorage) -----
@@ -336,6 +435,299 @@ export async function getCompletedLessonIds(userId: string, courseId?: string): 
     .eq('user_id', userId);
   if (error) throw error;
   return (data ?? []).map((r: { lesson_id: string }) => r.lesson_id);
+}
+
+// ============================================================
+// Creator Hub — creators, playlists, guide views
+// ============================================================
+
+const CREATOR_REF_COLS =
+  'id, slug, name, avatar_url, role_title, website, linkedin, instagram, youtube, tiktok, email';
+
+/** Attach the joined creator summary to a set of content items / playlists. */
+async function attachCreators<T extends { creator_id: string | null }>(
+  supabase: Awaited<ReturnType<typeof db>>,
+  items: T[],
+): Promise<Array<T & { creator: CreatorRef | null }>> {
+  const ids = Array.from(new Set(items.map((i) => i.creator_id).filter((x): x is string => !!x)));
+  if (ids.length === 0) return items.map((i) => ({ ...i, creator: null }));
+  const { data, error } = await supabase
+    .from('creators')
+    .select(CREATOR_REF_COLS)
+    .in('id', ids);
+  if (error) {
+    console.error('[attachCreators]', error);
+    return items.map((i) => ({ ...i, creator: null }));
+  }
+  const byId = new Map<string, CreatorRef>();
+  for (const c of (data ?? []) as CreatorRef[]) byId.set(c.id, c);
+  return items.map((i) => ({ ...i, creator: i.creator_id ? byId.get(i.creator_id) ?? null : null }));
+}
+
+export async function listCreators(opts?: { activeOnly?: boolean }): Promise<Creator[]> {
+  const supabase = await db();
+  let q = supabase.from('creators').select('*');
+  if (opts?.activeOnly) q = q.eq('status', 'active');
+  const { data, error } = await q
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as Creator[];
+}
+
+export async function listFeaturedCreators(limit = 6): Promise<Creator[]> {
+  const supabase = await db();
+  const { data, error } = await supabase
+    .from('creators')
+    .select('*')
+    .eq('status', 'active')
+    .eq('is_featured', true)
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return (data ?? []) as Creator[];
+}
+
+export async function getCreatorBySlug(slug: string): Promise<Creator | null> {
+  const supabase = await db();
+  const { data, error } = await supabase.from('creators').select('*').eq('slug', slug).maybeSingle();
+  if (error) throw error;
+  return (data as Creator) ?? null;
+}
+
+export async function getCreatorById(id: string): Promise<Creator | null> {
+  const supabase = await db();
+  const { data, error } = await supabase.from('creators').select('*').eq('id', id).maybeSingle();
+  if (error) throw error;
+  return (data as Creator) ?? null;
+}
+
+/** Counts for a creator. `publishedOnly` limits guides/playlists to published. */
+export async function getCreatorStats(creatorId: string, publishedOnly = true): Promise<CreatorStats> {
+  const supabase = await db();
+  let guidesQ = supabase
+    .from('content_items')
+    .select('id', { count: 'exact', head: true })
+    .eq('type', 'guide')
+    .eq('creator_id', creatorId);
+  if (publishedOnly) guidesQ = guidesQ.eq('status', 'published');
+
+  let playlistsQ = supabase
+    .from('playlists')
+    .select('id', { count: 'exact', head: true })
+    .eq('creator_id', creatorId);
+  if (publishedOnly) playlistsQ = playlistsQ.eq('status', 'published');
+
+  // View count via SECURITY DEFINER RPC so it works for public viewers too
+  // (guide_views rows are otherwise readable only by admins/owners).
+  const viewsQ = supabase.rpc('creator_total_views', { p_creator_id: creatorId });
+
+  const [guides, playlists, viewsRes] = await Promise.all([guidesQ, playlistsQ, viewsQ]);
+
+  const views = typeof viewsRes.data === 'number' ? viewsRes.data : Number(viewsRes.data ?? 0);
+
+  return { guides: guides.count ?? 0, playlists: playlists.count ?? 0, views };
+}
+
+/** View counts keyed by content_item_id (admin/creator stats). */
+export async function getGuideViewCounts(ids: string[]): Promise<Record<string, number>> {
+  if (ids.length === 0) return {};
+  const supabase = await db();
+  const { data, error } = await supabase
+    .from('guide_views')
+    .select('content_item_id')
+    .in('content_item_id', ids);
+  if (error) {
+    console.error('[getGuideViewCounts]', error);
+    return {};
+  }
+  const out: Record<string, number> = {};
+  for (const r of (data ?? []) as { content_item_id: string }[]) {
+    out[r.content_item_id] = (out[r.content_item_id] ?? 0) + 1;
+  }
+  return out;
+}
+
+/** Record a single guide view. Best-effort; never throws to the caller. */
+export async function recordGuideView(contentItemId: string, viewerId: string | null): Promise<void> {
+  try {
+    const supabase = await db();
+    await supabase.from('guide_views').insert({ content_item_id: contentItemId, viewer_id: viewerId });
+  } catch (err) {
+    console.error('[recordGuideView]', err);
+  }
+}
+
+// ----- Guides (creator-aware listings) -----
+
+/** Published guides for the public hub, newest first, with creator + categories. */
+export async function listPublishedGuides(): Promise<ContentItem[]> {
+  const supabase = await db();
+  const { data, error } = await supabase
+    .from('content_items')
+    .select('*')
+    .eq('type', 'guide')
+    .eq('status', 'published')
+    .order('published_at', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  const rows = (data ?? []) as ContentItem[];
+  const withCats = await attachContentCategories(supabase, rows);
+  return await attachCreators(supabase, withCats);
+}
+
+export async function listFeaturedGuides(limit = 6): Promise<ContentItem[]> {
+  const supabase = await db();
+  const { data, error } = await supabase
+    .from('content_items')
+    .select('*')
+    .eq('type', 'guide')
+    .eq('status', 'published')
+    .eq('is_featured', true)
+    .order('published_at', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  const rows = (data ?? []) as ContentItem[];
+  const withCats = await attachContentCategories(supabase, rows);
+  return await attachCreators(supabase, withCats);
+}
+
+/** Guides owned by a creator. `publishedOnly` for public pages; false for the dashboard. */
+export async function listGuidesByCreator(creatorId: string, publishedOnly = true): Promise<ContentItem[]> {
+  const supabase = await db();
+  let q = supabase.from('content_items').select('*').eq('type', 'guide').eq('creator_id', creatorId);
+  if (publishedOnly) q = q.eq('status', 'published');
+  const { data, error } = await q
+    .order('published_at', { ascending: false, nullsFirst: false })
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  const rows = (data ?? []) as ContentItem[];
+  return await attachContentCategories(supabase, rows);
+}
+
+/** A single guide with its creator joined. */
+export async function getGuideWithCreator(slug: string): Promise<(GuideItem & { creator: CreatorRef | null }) | null> {
+  const guide = await getGuide(slug);
+  if (!guide) return null;
+  const supabase = await db();
+  const [withCreator] = await attachCreators(supabase, [guide]);
+  return { ...guide, creator: withCreator.creator };
+}
+
+// ----- Playlists -----
+
+export async function listPlaylists(opts?: { publishedOnly?: boolean }): Promise<Playlist[]> {
+  const supabase = await db();
+  let q = supabase.from('playlists').select('*');
+  if (opts?.publishedOnly) q = q.eq('status', 'published');
+  const { data, error } = await q
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  const rows = (data ?? []) as Playlist[];
+  return await attachCreators(supabase, rows);
+}
+
+export async function listFeaturedPlaylists(limit = 6): Promise<Playlist[]> {
+  const supabase = await db();
+  const { data, error } = await supabase
+    .from('playlists')
+    .select('*')
+    .eq('status', 'published')
+    .eq('is_featured', true)
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  const rows = (data ?? []) as Playlist[];
+  return await attachCreators(supabase, rows);
+}
+
+export async function listPlaylistsByCreator(creatorId: string, publishedOnly = true): Promise<Playlist[]> {
+  const supabase = await db();
+  let q = supabase.from('playlists').select('*').eq('creator_id', creatorId);
+  if (publishedOnly) q = q.eq('status', 'published');
+  const { data, error } = await q
+    .order('sort_order', { ascending: true })
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  return (data ?? []) as Playlist[];
+}
+
+export async function getPlaylistById(id: string): Promise<Playlist | null> {
+  const supabase = await db();
+  const { data, error } = await supabase.from('playlists').select('*').eq('id', id).maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  const [row] = await attachCreators(supabase, [data as Playlist]);
+  return row;
+}
+
+/** Counts of items per playlist (for cards). */
+export async function getPlaylistItemCounts(playlistIds: string[]): Promise<Record<string, number>> {
+  if (playlistIds.length === 0) return {};
+  const supabase = await db();
+  const { data, error } = await supabase
+    .from('playlist_items')
+    .select('playlist_id')
+    .in('playlist_id', playlistIds);
+  if (error) {
+    console.error('[getPlaylistItemCounts]', error);
+    return {};
+  }
+  const out: Record<string, number> = {};
+  for (const r of (data ?? []) as { playlist_id: string }[]) {
+    out[r.playlist_id] = (out[r.playlist_id] ?? 0) + 1;
+  }
+  return out;
+}
+
+/** Ordered guides inside a playlist (RLS already filters unpublished for the public). */
+export async function getPlaylistGuides(playlistId: string): Promise<ContentItem[]> {
+  const supabase = await db();
+  const { data: items, error } = await supabase
+    .from('playlist_items')
+    .select('content_item_id, sort_order')
+    .eq('playlist_id', playlistId)
+    .order('sort_order', { ascending: true });
+  if (error) throw error;
+  const ordered = (items ?? []) as { content_item_id: string; sort_order: number }[];
+  if (ordered.length === 0) return [];
+
+  const { data: rows, error: cErr } = await supabase
+    .from('content_items')
+    .select('*')
+    .in('id', ordered.map((o) => o.content_item_id));
+  if (cErr) throw cErr;
+
+  const byId = new Map((rows ?? []).map((r) => [(r as ContentItem).id, r as ContentItem]));
+  const sorted = ordered.map((o) => byId.get(o.content_item_id)).filter((x): x is ContentItem => !!x);
+  const withCats = await attachContentCategories(supabase, sorted);
+  return await attachCreators(supabase, withCats);
+}
+
+/** Published playlists that contain a given guide (for the guide detail page). */
+export async function getPlaylistsContainingGuide(contentItemId: string): Promise<Playlist[]> {
+  const supabase = await db();
+  const { data: links, error } = await supabase
+    .from('playlist_items')
+    .select('playlist_id')
+    .eq('content_item_id', contentItemId);
+  if (error) {
+    console.error('[getPlaylistsContainingGuide]', error);
+    return [];
+  }
+  const ids = Array.from(new Set((links ?? []).map((l) => (l as { playlist_id: string }).playlist_id)));
+  if (ids.length === 0) return [];
+  const { data, error: pErr } = await supabase
+    .from('playlists')
+    .select('*')
+    .in('id', ids)
+    .eq('status', 'published');
+  if (pErr) throw pErr;
+  return (data ?? []) as Playlist[];
 }
 
 // ============================================================

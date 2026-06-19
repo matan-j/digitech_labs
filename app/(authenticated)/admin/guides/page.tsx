@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { listContent } from '@/lib/learn/db';
 import { Plus, FileText } from 'lucide-react';
+import ContentTabs from '@/components/learn-admin/ContentTabs';
 
 export const metadata = { title: 'ניהול מדריכים — Digitech Learning Hub' };
 export const dynamic = 'force-dynamic';
@@ -19,6 +20,7 @@ export default async function GuidesAdminIndex() {
 
   return (
     <div className="px-8 py-8 max-w-5xl">
+      <ContentTabs />
       <header className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-extrabold text-neutral-950">מדריכים</h1>

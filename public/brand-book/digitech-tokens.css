@@ -1,0 +1,220 @@
+/* ============================================================
+   DigiTech HUB — Design Tokens
+   Drop this file in and import it once at the root of your app.
+   Derived from the live product + the DigiTech brand (wing mark,
+   purple→teal gradient) + the DigiTech HUB brand book.
+   RTL-first (Hebrew). Deep-purple brand, light lavender surface,
+   teal brand-mark accent, mint-green progress signal.
+   ============================================================ */
+
+:root {
+  /* ---- Surfaces -------------------------------------------------- */
+  --color-bg:          #F7F6FB; /* page background — lavender white, never pure white */
+  --color-bg-tint:     #F3EEFF; /* tinted fills, active nav pill */
+  --color-surface:     #FFFFFF; /* cards, sheets */
+  --color-surface-2:   #FAF9FE; /* subtle raised / hover surface */
+  --color-border:      #ECE9F5; /* hairline card borders */
+  --color-border-2:    #E1DDEF; /* input & control borders (1.5px) */
+
+  /* ---- Ink (text) ----------------------------------------------- */
+  --color-ink:         #1C1430; /* primary text & headings */
+  --color-ink-2:       #5B5572; /* secondary text, body */
+  --color-ink-3:       #928CA6; /* faint text, meta, placeholders */
+
+  /* ---- Brand purple --------------------------------------------- */
+  --color-primary:       #4B2E83; /* primary buttons, Hero base, brand */
+  --color-primary-hover: #5C3BA0; /* hover state of primary */
+  --color-primary-press: #3C2569; /* active/press state */
+  --color-bright:        #6B3FE0; /* links, focus rings, secondary accent */
+  --color-violet:        #8B5CF6; /* light decorative purple */
+  --color-primary-50:    #F3EEFF; /* lightest purple tint */
+  --color-primary-100:   #E8E0FB; /* light purple tint */
+
+  /* Hero gradient (deep → lighter purple, ~140deg) */
+  --hero-from: #362465;
+  --hero-mid:  #3F2A78;
+  --hero-to:   #5F3E9C;
+  --grad-hero: linear-gradient(140deg, var(--hero-from) 0%, var(--hero-mid) 48%, var(--hero-to) 100%);
+
+  /* ---- Brand teal (the DigiTech logo gradient end) -------------- */
+  /* The DigiTech mark sits on a purple→teal gradient. Teal is the
+     brand-mark accent and the visual bridge to the mint signal.
+     Use it for: the logo/app-icon gradient, the "HUB" wordmark accent,
+     and rare decorative highlights. NOT a primary UI action color. */
+  --color-teal:        #2BA8C9; /* teal accent — the full-color logo's gradient end */
+  --color-teal-bright: #4CBCDC; /* brightest teal, native logo gradient */
+  --grad-mark:  linear-gradient(155deg, #6B47C7, #3A1F6B 72%); /* app-icon / badge tile (purple) */
+  --grad-mark-full: linear-gradient(212deg, #4B2E83 0%, #5151A4 50%, #36B5D6 100%); /* purple→teal, the literal full-color logo */
+  --grad-brand: linear-gradient(150deg, #4B2E83, #4CBCDC); /* rare brand accent fill */
+
+  /* ---- Signal / status ------------------------------------------ */
+  --color-signal:    #1FB58A; /* mint green — progress, LIVE, success */
+  --color-signal-50: #E4F7F1;
+  --color-signal-bright: #46D2AE; /* gradient end / dot on dark */
+  --color-gold:      #E0982E; /* "new" / highlight badge */
+  --color-gold-50:   #FBF1DF;
+  --color-error:     #E0567B; /* errors, destructive */
+  --color-error-50:  #FBEAF0;
+  --grad-progress: linear-gradient(90deg, var(--color-signal), var(--color-signal-bright));
+
+  /* ---- Typography ----------------------------------------------- */
+  --font-body:    "Rubik", system-ui, -apple-system, "Segoe UI", sans-serif; /* UI + body + display */
+  --font-numbers: "Space Grotesk", "Rubik", monospace;  /* numbers, codes, mono labels */
+  --fw-light: 300; --fw-regular: 400; --fw-medium: 500;
+  --fw-semibold: 600; --fw-bold: 700; --fw-extrabold: 800; --fw-black: 900;
+
+  /* Type scale (px) */
+  --fs-xs:  12px; --fs-sm:  14px; --fs-base: 16px; --fs-md:  18px;
+  --fs-lg:  20px; --fs-xl:  24px; --fs-2xl: 32px; --fs-3xl: 40px;
+  --fs-4xl: 56px; --fs-5xl: 72px;
+  --lh-tight: 1.05; --lh-snug: 1.25; --lh-normal: 1.5;
+
+  /* ---- Spacing (4px base) --------------------------------------- */
+  --space-xs:  4px;  --space-sm:  8px;  --space-md:  16px;
+  --space-lg:  24px; --space-xl:  40px; --space-2xl: 64px;
+
+  /* ---- Radius ---------------------------------------------------- */
+  --radius-input: 14px;  /* search, text fields */
+  --radius-btn:   999px; /* CTA buttons are PILL-shaped */
+  --radius-chip:  999px; /* chips, tabs, status pills, avatars */
+  --radius-card:  20px;  /* cards */
+  --radius-hero:  28px;  /* Hero / large panels */
+
+  /* ---- Shadows (always purple-tinted, never neutral grey) ------- */
+  --shadow-card:     0 4px 20px rgba(75, 46, 131, .08);
+  --shadow-elevated: 0 18px 48px -18px rgba(75, 46, 131, .34);
+  --shadow-btn:      0 12px 26px -10px rgba(75, 46, 131, .50);
+
+  /* ---- Motion ---------------------------------------------------- */
+  --dur-fast: 150ms; --dur-base: 220ms; --dur-slow: 400ms;
+  --ease-out: cubic-bezier(.22, 1, .36, 1);
+}
+
+/* ============================================================
+   Base — RTL Hebrew document
+   ============================================================ */
+html[dir="rtl"], body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-weight: var(--fw-regular);
+}
+/* Always render numbers tabular for game-score alignment */
+.num, [data-numbers] { font-family: var(--font-numbers); font-feature-settings: "tnum"; }
+
+/* ============================================================
+   Core components (copy-ready)
+   ============================================================ */
+
+/* Buttons — pill shaped */
+.btn {
+  display: inline-flex; align-items: center; gap: var(--space-sm);
+  font-family: var(--font-body); font-weight: var(--fw-semibold); font-size: var(--fs-md);
+  border: 0; border-radius: var(--radius-btn);
+  padding: 14px 26px; cursor: pointer;
+  transition: background var(--dur-fast) var(--ease-out), transform var(--dur-fast) var(--ease-out);
+}
+.btn:active { transform: scale(.96); }
+.btn-primary { background: var(--color-primary); color: #fff; box-shadow: var(--shadow-btn); }
+.btn-primary:hover { background: var(--color-primary-hover); }
+.btn-bright  { background: var(--color-bright); color: #fff; }
+.btn-light   { background: var(--color-surface); color: var(--color-ink); border: 1.5px solid var(--color-border-2); }
+.btn-ghost   { background: transparent; color: var(--color-ink-2); }
+.btn-white   { background: #fff; color: var(--color-primary); } /* on deep purple Hero */
+
+/* Chips / tabs */
+.chip {
+  display: inline-flex; align-items: center; gap: var(--space-sm);
+  font-weight: var(--fw-medium); font-size: var(--fs-base);
+  padding: 10px 20px; border-radius: var(--radius-chip);
+  background: var(--color-surface); border: 1.5px solid var(--color-border-2);
+  color: var(--color-ink-2); cursor: pointer;
+}
+.chip[aria-selected="true"], .chip.is-active {
+  background: var(--color-primary); color: #fff; border-color: var(--color-primary);
+}
+
+/* Status pills */
+.pill { display: inline-flex; align-items: center; gap: 7px;
+  font-weight: var(--fw-semibold); font-size: var(--fs-sm);
+  padding: 8px 16px; border-radius: var(--radius-chip); }
+.pill-signal { background: var(--color-signal-50); color: var(--color-signal); }
+.pill-signal::before { content:""; width:8px; height:8px; border-radius:50%; background: var(--color-signal); }
+.pill-violet { background: var(--color-primary-50); color: var(--color-primary); }
+.pill-new    { background: var(--color-gold-50); color: var(--color-gold); }
+
+/* Input / search */
+.field {
+  display: flex; align-items: center; gap: var(--space-md);
+  background: var(--color-surface); border: 1.5px solid var(--color-border-2);
+  border-radius: var(--radius-input); padding: 14px 18px;
+  color: var(--color-ink-3); font-size: var(--fs-md);
+}
+.field:focus-within { border-color: var(--color-bright); }
+
+/* Card */
+.card {
+  background: var(--color-surface); border: 1px solid var(--color-border);
+  border-radius: var(--radius-card); box-shadow: var(--shadow-card);
+}
+.card:hover { border-color: var(--color-primary); }
+
+/* Progress bar */
+.progress { height: 10px; border-radius: 999px; background: var(--color-primary-50); overflow: hidden; }
+.progress > i { display: block; height: 100%; border-radius: 999px; background: var(--grad-progress); }
+
+/* Hero panel */
+.hero {
+  background: var(--grad-hero); color: #fff;
+  border-radius: var(--radius-hero); padding: var(--space-xl);
+}
+
+/* Active nav (sidebar item) */
+.nav-item { color: var(--color-ink-2); border-radius: var(--radius-chip); padding: 12px 16px; }
+.nav-item.is-active { background: var(--color-bg-tint); color: var(--color-primary); }
+
+/* ============================================================
+   DigiTech logo / brand mark (the "wing" swoosh)
+   The mark is supplied two ways:
+   1) assets/digitech-swoosh-white.png  — white PNG, place on dark.
+   2) --swoosh below — an SVG mask so you can paint the wing ANY
+      color (currentColor) or any gradient (set background).
+   ============================================================ */
+:root {
+  --swoosh: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 86"><path d="M8 50 C30 41 48 37 64 40 C78 42 86 56 96 74 C104 52 126 22 150 16 C172 11 194 18 212 43 C213 46 212 49 209 50 C192 28 172 23 152 27 C130 32 110 55 98 80 C92 70 86 60 76 54 C64 47 62 47 60 47 C44 44 28 48 9 55 Z" fill="black"/></svg>');
+}
+
+/* The wing itself. Width sets size; the 220:86 ratio holds the shape.
+   Paint it via color (currentColor) OR override `background` w/ a gradient. */
+.swoosh {
+  display: block; width: 120px; aspect-ratio: 220 / 86;
+  background-color: currentColor;
+  -webkit-mask: var(--swoosh) center / contain no-repeat;
+          mask: var(--swoosh) center / contain no-repeat;
+}
+.swoosh-gradient { background: var(--grad-mark); } /* purple→teal wing */
+
+/* App icon / avatar badge: rounded-square purple→teal tile + white wing.
+   The small mint dot is the DigiTech HUB "spark" — keep it subtle. */
+.badge {
+  --s: 64px;
+  position: relative; width: var(--s); height: var(--s);
+  border-radius: calc(var(--s) * .28);
+  background: var(--grad-mark);
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 16px 34px -14px rgba(75,46,131,.62); flex: 0 0 auto;
+}
+.badge .swoosh { width: 66%; color: #fff; }
+.badge::after {
+  content: ""; position: absolute; top: 27%; right: 25%;
+  width: calc(var(--s) * .135); height: calc(var(--s) * .135);
+  border-radius: 50%; background: var(--color-signal);
+  box-shadow: 0 0 0 2px rgba(255,255,255,.2);
+}
+
+/* Wordmark lockup: "DigiTech" + small teal "HUB" + Hebrew tagline. */
+.logo-lockup { text-align: center; line-height: 1; }
+.logo-lockup b { font: var(--fw-extrabold) 48px/1 var(--font-body); letter-spacing: -.02em; color: var(--color-ink); }
+.logo-lockup b .hub { font-size: .46em; font-weight: var(--fw-extrabold); letter-spacing: .05em; color: var(--color-teal); vertical-align: .14em; margin-inline-start: .2em; }
+.logo-lockup .tagline { display: block; margin-top: 10px; font: var(--fw-medium) 18px/1 var(--font-body); color: var(--color-ink-3); }
+/* On deep-purple surfaces: set b { color:#fff } and tagline { color:rgba(255,255,255,.6) }. */

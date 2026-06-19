@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 type ProfileRow = {
   id: string;
-  role: 'admin' | 'subscriber';
+  role: 'admin' | 'subscriber' | 'creator';
   subscription_status: 'active' | 'cancelled' | 'past_due' | 'none';
   current_period_end: string | null;
 };
