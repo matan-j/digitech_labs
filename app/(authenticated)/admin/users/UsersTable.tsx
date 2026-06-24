@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState, useTransition } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, X, Copy, Check, Loader2, GraduationCap, ChevronLeft } from 'lucide-react';
 import type { UserRow } from './page';
@@ -167,46 +167,62 @@ function UserDetailModal({
   const [data, setData] = useState<AccessData | null>(null);
   const [loading, setLoading] = useState(true);
   const [assignId, setAssignId] = useState('');
-  const [busyResource, setBusyResource] = useState<string | null>(null);
   const [roleBusy, setRoleBusy] = useState(false);
   const [, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    const res = await fetch(`/api/admin/users/${user.id}/access`);
-    if (res.ok) setData(await res.json());
-    else setError('שגיאה בטעינת הגישות.');
-    setLoading(false);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const res = await fetch(`/api/admin/users/${user.id}/access`);
+      if (!alive) return;
+      if (res.ok) setData(await res.json());
+      else setError('שגיאה בטעינת הגישות.');
+      setLoading(false);
+    })();
+    return () => { alive = false; };
   }, [user.id]);
 
-  useEffect(() => { void load(); }, [load]);
-
+  // Optimistic: show/remove the tag instantly, sync in the background, roll back on error.
   async function assign(resourceId: string) {
-    if (!resourceId) return;
-    setBusyResource(resourceId);
+    if (!resourceId || !data) return;
+    const course = data.courses.find((c) => c.id === resourceId);
+    if (!course) return;
     setError(null);
+    setAssignId('');
+    const optimistic: Grant = {
+      kind: 'entitlement',
+      resource_type: 'course',
+      resource_id: resourceId,
+      title: course.title,
+      source: 'admin',
+      granted_at: new Date().toISOString(),
+    };
+    setData((d) => (d ? { ...d, grants: [...d.grants, optimistic] } : d));
     const res = await fetch('/api/admin/access', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: user.id, resourceType: 'course', resourceId }),
     });
-    setBusyResource(null);
-    setAssignId('');
-    if (res.ok) await load();
-    else setError('שגיאה בשיוך הקורס.');
+    if (!res.ok) {
+      setData((d) => (d ? { ...d, grants: d.grants.filter((g) => g.resource_id !== resourceId) } : d));
+      setError('שגיאה בשיוך הקורס.');
+    }
   }
 
   async function unassign(g: Grant) {
-    setBusyResource(g.resource_id);
+    if (!data) return;
     setError(null);
+    setData((d) => (d ? { ...d, grants: d.grants.filter((x) => !(x.resource_id === g.resource_id && x.kind === g.kind)) } : d));
     const res = await fetch('/api/admin/access', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ kind: g.kind, userId: user.id, resourceType: g.resource_type, resourceId: g.resource_id }),
     });
-    setBusyResource(null);
-    if (res.ok) await load();
-    else setError('שגיאה בהסרת השיוך.');
+    if (!res.ok) {
+      setData((d) => (d ? { ...d, grants: [...d.grants, g] } : d));
+      setError('שגיאה בהסרת השיוך.');
+    }
   }
 
   async function setRole(role: UserRow['role']) {
@@ -304,7 +320,7 @@ function UserDetailModal({
               <select
                 value={assignId}
                 onChange={(e) => { const v = e.target.value; setAssignId(v); void assign(v); }}
-                disabled={busyResource !== null || available.length === 0}
+                disabled={available.length === 0}
                 className="w-full px-3 py-2 rounded-md border border-neutral-300 focus:border-brand-purple-400 focus:outline-none text-sm bg-white disabled:bg-neutral-50 disabled:text-neutral-400"
               >
                 <option value="">
@@ -333,13 +349,10 @@ function UserDetailModal({
                       <button
                         type="button"
                         onClick={() => unassign(g)}
-                        disabled={busyResource === g.resource_id}
-                        className="ms-0.5 grid place-items-center w-5 h-5 rounded-full hover:bg-brand-purple-200 disabled:opacity-50"
+                        className="ms-0.5 grid place-items-center w-5 h-5 rounded-full hover:bg-brand-purple-200"
                         aria-label={`הסר שיוך ל${g.title}`}
                       >
-                        {busyResource === g.resource_id
-                          ? <Loader2 className="w-3 h-3 animate-spin" />
-                          : <X className="w-3 h-3" />}
+                        <X className="w-3 h-3" />
                       </button>
                     </span>
                   ))
