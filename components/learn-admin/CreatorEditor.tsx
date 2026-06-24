@@ -74,6 +74,13 @@ export default function CreatorEditor({ initial, users }: { initial: Creator; us
 
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
+  const saveNow = useCallback(() => {
+    if (timer.current) clearTimeout(timer.current);
+    const { id, slug, created_at, updated_at, created_by, updated_by, ...rest } = form;
+    void id; void slug; void created_at; void updated_at; void created_by; void updated_by;
+    void persist(rest);
+  }, [persist, form]);
+
   async function handleDelete() {
     if (!confirm('למחוק את היוצר? פעולה זו אינה מוחקת את התוכן אך מנתקת אותו מהיוצר.')) return;
     const res = await fetch(`/api/admin/creators/${initial.id}`, { method: 'DELETE' });
@@ -98,7 +105,7 @@ export default function CreatorEditor({ initial, users }: { initial: Creator; us
             />
             <p className="text-xs text-neutral-400 mt-1 font-mono" dir="ltr">/learn/creators/{form.slug}</p>
           </div>
-          <SaveIndicator state={saveState} />
+          <SaveIndicator state={saveState} onForceSave={saveNow} />
         </div>
         <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-neutral-100">
           <a

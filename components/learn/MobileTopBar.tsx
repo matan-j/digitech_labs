@@ -8,9 +8,9 @@ import type { AuthState } from '@/lib/auth';
 import LogoutButton from '@/components/auth/LogoutButton';
 
 const NAV = [
-  { label: 'דאשבורד', href: '/learn' },
+  { label: 'עמוד הבית', href: '/learn' },
   { label: 'קורסים', href: '/learn/courses' },
-  { label: 'מדריכים', href: '/learn/guides' },
+  { label: 'הדרכות', href: '/learn/guides' },
   { label: 'פלייבוקים', href: '/learn/playbooks' },
   { label: 'יוצרים', href: '/learn/creators' },
 ];

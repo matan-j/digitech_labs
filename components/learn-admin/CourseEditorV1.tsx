@@ -52,6 +52,9 @@ export default function CourseEditorV1({ initial }: Props) {
   const [priceAmount, setPriceAmount] = useState<string>(initial.price_amount != null ? String(initial.price_amount) : '');
   const [priceCurrency, setPriceCurrency] = useState(initial.price_currency ?? 'ILS');
   const [saveState, setSaveState] = useState<SaveState>('idle');
+  const [slug, setSlug] = useState(initial.slug);
+  const [slugSaving, setSlugSaving] = useState(false);
+  const [slugError, setSlugError] = useState<string | null>(null);
   const [modules, setModules] = useState<ModuleWithChildren[]>(initial.modules);
   const [newModuleTitle, setNewModuleTitle] = useState('');
   const [addingModule, setAddingModule] = useState(false);
@@ -106,10 +109,40 @@ export default function CourseEditorV1({ initial }: Props) {
     if (saveTimer.current) clearTimeout(saveTimer.current);
   }, []);
 
+  const saveNow = useCallback(() => {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    void persist(buildMeta());
+  }, [persist, buildMeta]);
+
   async function togglePublish() {
     const next = status === 'published' ? 'draft' : 'published';
     const ok = await persist(buildMeta({ status: next }));
     if (ok) setStatus(next);
+  }
+
+  async function updateSlug() {
+    const desired = slug.trim();
+    if (!desired || desired === initial.slug) return;
+    setSlugSaving(true);
+    setSlugError(null);
+    try {
+      const res = await fetch(`/api/content/course/${initial.slug}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ slug: desired }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setSlugError(data?.message ?? 'שגיאה בעדכון הקישור');
+        setSlugSaving(false);
+        return;
+      }
+      const newSlug = data.item?.slug ?? desired;
+      router.replace(window.location.pathname.replace(`/${initial.slug}`, `/${newSlug}`));
+    } catch {
+      setSlugError('שגיאת רשת');
+      setSlugSaving(false);
+    }
   }
 
   async function handleDelete() {
@@ -455,7 +488,7 @@ export default function CourseEditorV1({ initial }: Props) {
             />
           </div>
           <div className="flex flex-col items-end gap-2">
-            <SaveIndicator state={saveState} />
+            <SaveIndicator state={saveState} onForceSave={saveNow} />
             <a
               href={`/learn/courses/${initial.slug}`}
               target="_blank"
@@ -513,6 +546,35 @@ export default function CourseEditorV1({ initial }: Props) {
 
       <section className="bg-white rounded-2xl border border-neutral-200 p-5">
         <h2 className="text-sm font-extrabold text-neutral-700 uppercase tracking-wide mb-3">מטא-דאטה</h2>
+
+        {/* Slug (URL) — editable at any stage */}
+        <div className="mb-4 pb-4 border-b border-neutral-100">
+          <label className="block text-xs font-semibold text-neutral-600 mb-1">כתובת הקורס (Slug)</label>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs text-neutral-400 font-mono" dir="ltr">/learn/courses/</span>
+            <input
+              value={slug}
+              onChange={(e) => { setSlug(e.target.value); setSlugError(null); }}
+              dir="ltr"
+              placeholder="course-slug"
+              className="flex-1 min-w-[180px] px-3 py-2 rounded-md border border-neutral-200 focus:border-brand-purple-400 focus:outline-none text-sm font-mono"
+            />
+            <button
+              type="button"
+              onClick={updateSlug}
+              disabled={slugSaving || !slug.trim() || slug.trim() === initial.slug}
+              className="px-3 py-2 rounded-pill text-xs font-semibold bg-brand-purple-700 text-white hover:bg-brand-purple-600 disabled:bg-neutral-300 transition-colors"
+            >
+              {slugSaving ? 'מעדכן…' : 'עדכן קישור'}
+            </button>
+          </div>
+          {slugError ? (
+            <p className="mt-1.5 text-[11px] text-red-600">{slugError}</p>
+          ) : (
+            <p className="mt-1.5 text-[11px] text-amber-600">שינוי הקישור ישבור קישורים קיימים לקורס זה. ניתן לשנות בכל שלב.</p>
+          )}
+        </div>
+
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-xs font-semibold text-neutral-600 mb-1">תיאור ארוך</label>

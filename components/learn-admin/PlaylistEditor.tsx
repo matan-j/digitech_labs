@@ -77,6 +77,11 @@ export default function PlaylistEditor({
 
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current); }, []);
 
+  const saveNow = useCallback(() => {
+    if (timer.current) clearTimeout(timer.current);
+    void persist(buildPayload());
+  }, [persist, buildPayload]);
+
   async function togglePublish() {
     const next = status === 'published' ? 'draft' : 'published';
     const ok = await persist(buildPayload({ status: next }));
@@ -114,7 +119,7 @@ export default function PlaylistEditor({
             placeholder="שם הפלייליסט"
             className="flex-1 text-2xl font-extrabold text-neutral-950 bg-transparent border-0 focus:outline-none focus:bg-neutral-50 rounded px-2 -mx-2 py-1"
           />
-          <SaveIndicator state={saveState} />
+          <SaveIndicator state={saveState} onForceSave={saveNow} />
         </div>
         <div className="flex items-center gap-3 pt-3 border-t border-neutral-100">
           <button

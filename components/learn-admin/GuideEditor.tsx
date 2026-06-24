@@ -144,6 +144,11 @@ export default function GuideEditor({ initial, mode = 'admin', creators = [], ba
     if (saveTimer.current) clearTimeout(saveTimer.current);
   }, []);
 
+  const saveNow = useCallback(() => {
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    void persist(buildPayload());
+  }, [persist, buildPayload]);
+
   async function togglePublish() {
     const next = status === 'published' ? 'draft' : 'published';
     const ok = await persist(buildPayload({ status: next }));
@@ -203,7 +208,7 @@ export default function GuideEditor({ initial, mode = 'admin', creators = [], ba
             />
           </div>
           <div className="flex flex-col items-end gap-2">
-            <SaveIndicator state={saveState} />
+            <SaveIndicator state={saveState} onForceSave={saveNow} />
             <div className="flex items-center gap-3">
               <button
                 type="button"
