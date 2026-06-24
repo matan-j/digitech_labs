@@ -1,10 +1,11 @@
 import Link from 'next/link';
 import { BookOpen, Compass, BookText, CheckCircle2, Library, ArrowLeft } from 'lucide-react';
-import { listCourses } from '@/lib/learn/courses';
 import CourseCard from '@/components/learn/CourseCard';
 import GuideCard from '@/components/learn/GuideCard';
 import { getCurrentUser } from '@/lib/auth';
-import { getCompletedLessonIds, listContent, listPlaybooks } from '@/lib/learn/db';
+import { getCompletedLessonIds, listContent, listPlaybooks, listPublishedContent } from '@/lib/learn/db';
+import { isPubliclyListed } from '@/lib/learn/access';
+import { listOwnedResourceIds } from '@/lib/payments/entitlement-service';
 import { getBrandCoverUrl } from '@/lib/brand';
 
 export const dynamic = 'force-dynamic';
@@ -17,17 +18,22 @@ function firstNameFromEmail(email: string): string {
 
 export default async function LearnDashboard() {
   const auth = await getCurrentUser();
-  const [courses, completed, guides, playbooks, coverUrl] = await Promise.all([
-    listCourses(),
+  const isAdmin = auth?.profile.role === 'admin';
+  const hasAccess = !!(isAdmin || auth?.profile.subscription_status === 'active');
+  const [courseItems, completed, guides, playbooks, coverUrl, ownedIds] = await Promise.all([
+    listPublishedContent('course'),
     auth ? getCompletedLessonIds(auth.userId) : Promise.resolve([] as string[]),
     listContent('guide'),
     listPlaybooks(),
     getBrandCoverUrl(),
+    auth ? listOwnedResourceIds('course') : Promise.resolve(new Set<string>()),
   ]);
+  // Owned (purchased/assigned) courses first, then the rest (stable sort).
+  const courses = courseItems
+    .filter(isPubliclyListed)
+    .sort((a, b) => Number(ownedIds.has(b.id)) - Number(ownedIds.has(a.id)));
   const publishedGuides = guides.filter((g) => g.status === 'published');
   const displayName = auth?.profile.full_name ?? (auth?.email ? firstNameFromEmail(auth.email) : '');
-  const isAdmin = auth?.profile.role === 'admin';
-  const hasAccess = isAdmin || auth?.profile.subscription_status === 'active';
 
   return (
     <div className="px-4 sm:px-6 lg:px-10 py-6 lg:py-10 max-w-6xl mx-auto">
@@ -172,7 +178,12 @@ export default async function LearnDashboard() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {courses.slice(0, 6).map((c) => (
-              <CourseCard key={c.slug} course={c} />
+              <CourseCard
+                key={c.id}
+                course={c}
+                owned={ownedIds.has(c.id)}
+                canSeePremium={hasAccess}
+              />
             ))}
           </div>
         )}
