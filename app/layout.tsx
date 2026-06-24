@@ -1,6 +1,8 @@
 import type { Metadata } from 'next';
 import { Rubik, Space_Grotesk } from 'next/font/google';
 import './globals.css';
+import CartProvider from '@/components/cart/CartProvider';
+import MiniCart from '@/components/cart/MiniCart';
 
 const rubik = Rubik({
   subsets: ['hebrew', 'latin'],
@@ -32,7 +34,10 @@ export default function RootLayout({
   return (
     <html lang="he" dir="rtl" className={`${rubik.variable} ${spaceGrotesk.variable}`}>
       <body className={`${rubik.className} min-h-screen antialiased`}>
-        {children}
+        <CartProvider>
+          {children}
+          <MiniCart />
+        </CartProvider>
       </body>
     </html>
   );

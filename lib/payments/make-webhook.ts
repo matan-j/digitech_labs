@@ -19,6 +19,8 @@ export type PurchaseWebhookProduct = {
   product_name: string;
   price_before_discount: number;
   price_after_discount: number;
+  /** Cover image URL of the product (course), so Make/GROW can render it. */
+  image_url: string;
 };
 
 export type PurchaseWebhookPayload = {

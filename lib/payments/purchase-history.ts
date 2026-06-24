@@ -39,10 +39,11 @@ export type AdminPurchaseRow = PurchaseRow & {
   user_name: string | null;
 };
 
-const COLS_BASE = 'public_order_id, created_at, content_type, content_id, status, amount, currency, checkout_url, user_id';
+const COLS_BASE = 'id, public_order_id, created_at, content_type, content_id, status, amount, currency, checkout_url, user_id';
 const COLS_FULL = `${COLS_BASE}, document_id, document_url`;
 
 type RawOrder = {
+  id: string;
   public_order_id: string;
   created_at: string;
   content_type: ContentType;
@@ -85,13 +86,43 @@ async function titlesFor(contentIds: string[]): Promise<Map<string, string>> {
   return new Map((data ?? []).map((c) => [c.id as string, (c.title as string) ?? '(תוכן נמחק)']));
 }
 
-function toRow(o: RawOrder, titles: Map<string, string>): PurchaseRow {
+/**
+ * Display title per multi-item ("bundle") order, keyed by orders.id. Joins up to
+ * two product names, else falls back to a "N מוצרים" count — a bundle's
+ * content_id points at the user, not a content row, so titlesFor() can't resolve
+ * it.
+ */
+async function bundleTitlesFor(orderIds: string[]): Promise<Map<string, string>> {
+  if (orderIds.length === 0) return new Map();
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from('order_items')
+    .select('order_id, product_title')
+    .in('order_id', orderIds);
+  const byOrder = new Map<string, string[]>();
+  for (const r of data ?? []) {
+    const list = byOrder.get(r.order_id as string) ?? [];
+    list.push((r.product_title as string) ?? 'מוצר');
+    byOrder.set(r.order_id as string, list);
+  }
+  const out = new Map<string, string>();
+  for (const [orderId, titles] of byOrder) {
+    out.set(orderId, titles.length <= 2 ? titles.join(' + ') : `${titles.length} מוצרים`);
+  }
+  return out;
+}
+
+function toRow(o: RawOrder, titles: Map<string, string>, bundleTitles: Map<string, string>): PurchaseRow {
+  const title =
+    o.content_type === 'bundle'
+      ? bundleTitles.get(o.id) ?? 'סל קניות'
+      : titles.get(o.content_id) ?? '(תוכן נמחק)';
   return {
     public_order_id: o.public_order_id,
     created_at: o.created_at,
     content_type: o.content_type,
     content_id: o.content_id,
-    product_title: titles.get(o.content_id) ?? '(תוכן נמחק)',
+    product_title: title,
     status: o.status,
     amount: Number(o.amount),
     currency: o.currency,
@@ -107,7 +138,8 @@ export async function getUserPurchases(userId: string): Promise<PurchaseRow[]> {
     supabase.from('orders').select(cols).eq('user_id', userId).order('created_at', { ascending: false }),
   );
   const titles = await titlesFor(orders.map((o) => o.content_id));
-  return orders.map((o) => toRow(o, titles));
+  const bundleTitles = await bundleTitlesFor(orders.filter((o) => o.content_type === 'bundle').map((o) => o.id));
+  return orders.map((o) => toRow(o, titles, bundleTitles));
 }
 
 /** Every purchase attempt across all users (admin console), newest first. */
@@ -117,6 +149,7 @@ export async function getAllPurchases(limit = 1000): Promise<AdminPurchaseRow[]>
     supabase.from('orders').select(cols).order('created_at', { ascending: false }).limit(limit),
   );
   const titles = await titlesFor(orders.map((o) => o.content_id));
+  const bundleTitles = await bundleTitlesFor(orders.filter((o) => o.content_type === 'bundle').map((o) => o.id));
 
   const [{ data: authData }, { data: profiles }] = await Promise.all([
     supabase.auth.admin.listUsers({ perPage: 1000 }),
@@ -126,7 +159,7 @@ export async function getAllPurchases(limit = 1000): Promise<AdminPurchaseRow[]>
   const nameById = new Map<string, string | null>((profiles ?? []).map((p) => [p.id as string, (p.full_name as string | null) ?? null]));
 
   return orders.map((o) => ({
-    ...toRow(o, titles),
+    ...toRow(o, titles, bundleTitles),
     user_id: o.user_id,
     user_email: emailById.get(o.user_id) ?? null,
     user_name: nameById.get(o.user_id) ?? null,

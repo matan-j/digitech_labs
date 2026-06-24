@@ -22,11 +22,13 @@ import { NextResponse } from 'next/server';
 import {
   getOrderByPublicId,
   getOrderByProviderTransactionId,
+  getOrderItems,
   markOrderPaid,
   setOrderInvoice,
   validatePaymentAgainstOrder,
 } from '@/lib/payments/order-service';
 import { grantEntitlement } from '@/lib/payments/entitlement-service';
+import { clearCartItems } from '@/lib/cart/cart-service';
 import { createServiceClient } from '@/lib/supabase/server';
 
 export const runtime = 'nodejs';
@@ -200,13 +202,31 @@ export async function POST(request: Request) {
 
   // Verified enough → settle + grant (both idempotent).
   await markOrderPaid(order.id, transactionId);
-  await grantEntitlement({
-    userId: order.user_id,
-    resourceType: order.content_type,
-    resourceId: order.content_id,
-    orderId: order.id,
-    source: 'purchase',
-  });
+
+  // Multi-item (cart "bundle") order → grant one entitlement per line and clear
+  // exactly those items from the buyer's cart. A single-item order has no
+  // order_items rows → fall back to the order's own content_id (back-compatible).
+  const items = await getOrderItems(order.id);
+  if (items.length > 0) {
+    for (const it of items) {
+      await grantEntitlement({
+        userId: order.user_id,
+        resourceType: it.content_type,
+        resourceId: it.content_id,
+        orderId: order.id,
+        source: 'purchase',
+      });
+    }
+    await clearCartItems(order.user_id, items.map((it) => it.content_id));
+  } else {
+    await grantEntitlement({
+      userId: order.user_id,
+      resourceType: order.content_type,
+      resourceId: order.content_id,
+      orderId: order.id,
+      source: 'purchase',
+    });
+  }
   if (documentUrl) await setOrderInvoice(order.id, { documentUrl });
   await logEvent({ orderId: order.id, eventId, status: 'processed', raw: payload });
 
