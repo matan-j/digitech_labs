@@ -7,6 +7,7 @@ import { renderMarkdownLite } from '@/lib/learn/markdown';
 import { decideAccess, resolveAccessLevel, resolveDisplayPrice } from '@/lib/learn/access';
 import { hasActiveEntitlement } from '@/lib/payments/entitlement-service';
 import AccessActionButton from '@/components/learn/AccessActionButton';
+import AddToCartButton from '@/components/cart/AddToCartButton';
 import type { DbLesson, ModuleWithChildren } from '@/lib/learn/types';
 import ShareButton from '@/components/learn/ShareButton';
 
@@ -148,16 +149,24 @@ export default async function CourseLanding({ params }: { params: Promise<{ cour
                           <span className="ms-2 text-[11px] font-bold uppercase tracking-wide text-emerald-300">מבצע</span>
                         </span>
                       )}
-                      <AccessActionButton
-                        kind="purchase"
-                        slug={slug}
-                        contentType="course"
-                        returnTo={returnTo}
-                        label={dp.final ? `רכישה מיידית · ${dp.final}` : 'רכישת גישה לקורס'}
-                        className={btnCls}
-                        errorClassName={errCls}
-                        icon={<Lock className="w-4 h-4" />}
-                      />
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        <AccessActionButton
+                          kind="purchase"
+                          slug={slug}
+                          contentType="course"
+                          returnTo={returnTo}
+                          label={dp.final ? `רכישה מהירה · ${dp.final}` : 'רכישה מהירה'}
+                          className={btnCls}
+                          errorClassName={errCls}
+                          icon={<Lock className="w-4 h-4" />}
+                        />
+                        <AddToCartButton
+                          slug={slug}
+                          contentId={course.id}
+                          returnTo={returnTo}
+                          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-pill border border-white/40 text-white text-sm font-bold hover:bg-white/10 transition-colors disabled:opacity-70"
+                        />
+                      </div>
                     </div>
                   );
                 }

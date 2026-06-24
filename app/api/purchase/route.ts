@@ -29,6 +29,7 @@ type PurchaseItem = {
   id: string;
   slug: string;
   title: string | null;
+  cover_url: string | null;
   price_amount: number | null;
   sale_amount: number | null;
   price_currency: string | null;
@@ -70,7 +71,7 @@ export async function POST(request: Request) {
   const service = createServiceClient();
   const { data: item } = await service
     .from('content_items')
-    .select('id, slug, title, access_level, is_premium, price_amount, sale_amount, price_currency, status')
+    .select('id, slug, title, cover_url, access_level, is_premium, price_amount, sale_amount, price_currency, status')
     .eq('slug', slug)
     .eq('type', contentType)
     .maybeSingle();
@@ -188,6 +189,7 @@ async function paidViaMake(
         product_name: item.title ?? item.slug,
         price_before_discount: price.original,
         price_after_discount: price.final,
+        image_url: item.cover_url ?? '',
       },
     ],
     public_order_id: order.public_order_id,

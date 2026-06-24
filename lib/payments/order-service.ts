@@ -63,6 +63,60 @@ export async function createPendingOrder(params: {
   return data as Order;
 }
 
+// ============================================================
+// order_items — line items for multi-item ("bundle") cart orders (migration 032).
+// A single-item order keeps using orders.content_id; a bundle order also writes
+// one row here per product. The verified webhook grants one entitlement per row.
+// ============================================================
+
+export type OrderItem = {
+  id: string;
+  order_id: string;
+  content_type: ContentType;
+  content_id: string;
+  product_title: string | null;
+  cover_url: string | null;
+  price_before: number;
+  price_after: number;
+};
+
+export type OrderItemInput = {
+  contentType: ContentType;
+  contentId: string;
+  productTitle?: string | null;
+  coverUrl?: string | null;
+  priceBefore: number;
+  priceAfter: number;
+};
+
+/** Insert the line items for an order (bundle checkout). Service-role only. */
+export async function createOrderItems(orderId: string, items: OrderItemInput[]): Promise<void> {
+  if (items.length === 0) return;
+  const supabase = createServiceClient();
+  const rows = items.map((i) => ({
+    order_id: orderId,
+    content_type: i.contentType,
+    content_id: i.contentId,
+    product_title: i.productTitle ?? null,
+    cover_url: i.coverUrl ?? null,
+    price_before: i.priceBefore,
+    price_after: i.priceAfter,
+  }));
+  const { error } = await supabase.from('order_items').insert(rows);
+  if (error) throw new Error(`createOrderItems failed: ${error.message}`);
+}
+
+/** All line items for an order (empty for legacy single-item orders). */
+export async function getOrderItems(orderId: string): Promise<OrderItem[]> {
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from('order_items')
+    .select('*')
+    .eq('order_id', orderId)
+    .order('created_at', { ascending: true });
+  return (data ?? []) as OrderItem[];
+}
+
 /** The current open (pending) order for this user+item, if any. Used to avoid
  *  creating duplicate orders / resending the webhook on double-click or refresh. */
 export async function getOpenPendingOrder(

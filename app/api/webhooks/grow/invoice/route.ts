@@ -1,19 +1,18 @@
 // ============================================================
 // app/api/webhooks/grow/invoice/route.ts
-// Inbound webhook for the GROW/Meshulam RECEIPT (חשבונית). After a payment
-// settles, the invoicing step in Make POSTs the issued receipt here so we can
-// attach it to the matching local order. Expected body:
+// Inbound webhook for the GROW/Meshulam RECEIPT (חשבונית). ALL issued invoices
+// are POSTed here. The buyer's public order id is echoed back as a query param
+// (our DGH-… id) and we attach the receipt to that existing order. Example:
 //
+//   POST /api/webhooks/grow/invoice?publicOrderId=DGH-8310CD9F8C95
 //   {
-//     "transactionCode": "ABCD1234",                 // == the GROW transactionId
-//     "invoiceNumber":   "20",                       // receipt number
-//     "invoiceUrl":      "https://secure.meshulam.co.il/..."  // the receipt link
+//     "invoiceNumber": "20",                              // receipt number
+//     "invoiceUrl":    "https://secure.meshulam.co.il/..." // the receipt link
 //   }
 //
-// Matching: `transactionCode` is the same value the payment-success webhook
-// stored on the order as provider_transaction_id ({{3.data.transactionId}}).
-// We look the order up by that id and store the receipt — `invoiceUrl` becomes
-// the order's invoice link (download via /api/account/orders/<id>/invoice).
+// Matching is by the PUBLIC ORDER ID (query or body), not by transaction code.
+// `invoiceUrl` becomes the order's invoice link (download via
+// /api/account/orders/<id>/invoice).
 //
 // SECURITY: same optional shared secret as the payment webhook
 // (GROW_WEBHOOK_SECRET). Idempotent — re-delivery just re-attaches the same
@@ -21,7 +20,7 @@
 // ============================================================
 
 import { NextResponse } from 'next/server';
-import { getOrderByProviderTransactionId, setOrderInvoice } from '@/lib/payments/order-service';
+import { getOrderByPublicId, setOrderInvoice } from '@/lib/payments/order-service';
 import { createServiceClient } from '@/lib/supabase/server';
 
 export const runtime = 'nodejs';
@@ -110,30 +109,32 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
-  // The GROW transactionId we stored on the order at payment-success time.
-  const transactionCode = pick(payload, ['transactionCode', 'transaction_code', 'transactionId', 'transaction_id']);
+  // Our public order id (DGH-…), echoed back as ?publicOrderId=… (or in the body).
+  const publicOrderId = pick(payload, [
+    'publicOrderId', 'public_order_id', 'order_number', 'order', 'order_id', 'orderid',
+  ]);
   const invoiceNumber = pick(payload, ['invoiceNumber', 'invoice_number', 'documentNumber', 'document_number']);
   const invoiceUrl = pick(payload, ['invoiceUrl', 'invoice_url', 'documentUrl', 'document_url', 'url', 'pdf', 'pdfUrl']);
 
-  if (!transactionCode) {
-    await logEvent({ orderId: null, eventId: `grow-invoice-no-code-${Math.abs(hashStr(JSON.stringify(payload)))}`, status: 'error', raw: payload, error: 'missing transactionCode' });
-    console.error('[grow:invoice] missing transactionCode');
-    return NextResponse.json({ error: 'missing_transaction_code' }, { status: 400 });
+  if (!publicOrderId) {
+    await logEvent({ orderId: null, eventId: `grow-invoice-no-id-${Math.abs(hashStr(JSON.stringify(payload)))}`, status: 'error', raw: payload, error: 'missing publicOrderId' });
+    console.error('[grow:invoice] missing publicOrderId');
+    return NextResponse.json({ error: 'missing_public_order_id' }, { status: 400 });
   }
   if (!invoiceUrl) {
-    await logEvent({ orderId: null, eventId: `grow-invoice-${transactionCode}`, status: 'error', raw: payload, error: 'missing invoiceUrl' });
-    console.error('[grow:invoice] missing invoiceUrl', { transactionCode });
+    await logEvent({ orderId: null, eventId: `grow-invoice-${publicOrderId}`, status: 'error', raw: payload, error: 'missing invoiceUrl' });
+    console.error('[grow:invoice] missing invoiceUrl', { publicOrderId });
     return NextResponse.json({ error: 'missing_invoice_url' }, { status: 400 });
   }
 
-  const eventId = `grow-invoice-${transactionCode}`;
+  const eventId = `grow-invoice-${publicOrderId}`;
 
-  // Match the order by the transaction id the payment-success webhook persisted.
-  const order = await getOrderByProviderTransactionId(transactionCode);
+  // Match the existing order by its public order id.
+  const order = await getOrderByPublicId(publicOrderId);
   if (!order) {
     await logEvent({ orderId: null, eventId: `${eventId}-unmatched`, status: 'ignored', raw: payload, error: 'no matching order' });
-    console.error('[grow:invoice] no matching order', { transactionCode });
-    return NextResponse.json({ received: true, matched: false, transactionCode });
+    console.error('[grow:invoice] no matching order', { publicOrderId });
+    return NextResponse.json({ received: true, matched: false, public_order_id: publicOrderId });
   }
 
   // Attach the receipt. `invoiceUrl` is the link used when the buyer/admin

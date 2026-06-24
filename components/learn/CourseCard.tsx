@@ -4,6 +4,7 @@ import type { ContentItem } from '@/lib/learn/types';
 import { resolveAccessLevel, resolveDisplayPrice } from '@/lib/learn/access';
 import ShareButton from '@/components/learn/ShareButton';
 import CourseLockOverlay from '@/components/learn/CourseLockOverlay';
+import AddToCartButton from '@/components/cart/AddToCartButton';
 
 /**
  * Canonical course card for the catalog and the learn hub. Reads the access
@@ -32,8 +33,17 @@ export default function CourseCard({
     <div className="relative">
       {/* Share button sits opposite the lock tag; it's a sibling of the card
           <Link> so we never nest a <button> inside an <a>. */}
-      <div className="absolute top-3 left-3 z-10">
+      <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5">
         <ShareButton path={`/learn/courses/${c.slug}`} title={c.title} />
+        {locked && isPaid && (
+          <AddToCartButton
+            slug={c.slug}
+            contentId={c.id}
+            returnTo="/learn/courses"
+            label="לסל"
+            className="inline-flex items-center gap-1 rounded-pill bg-white/95 px-2.5 py-1.5 text-[11px] font-extrabold text-brand-purple-700 shadow-sm transition-colors hover:bg-white disabled:opacity-70"
+          />
+        )}
       </div>
       <Link
         href={`/learn/courses/${c.slug}`}
