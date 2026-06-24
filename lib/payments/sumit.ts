@@ -30,16 +30,12 @@ function credentials() {
 }
 
 /**
- * Human/url-safe unique order id, e.g. digi-K7P3QX. One per purchase. Uses an
- * unambiguous alphabet (no 0/O/1/I) so it's safe to read out / type. ~1B values;
- * the orders.public_order_id UNIQUE constraint is the final guard.
+ * Url-safe unique order id, e.g. DGH-8310CD9F8C95. One per purchase: the `DGH-`
+ * prefix + 12 uppercase hex chars (6 random bytes → ~2.8e14 values). The
+ * orders.public_order_id UNIQUE constraint is the final guard.
  */
 export function generatePublicOrderId(): string {
-  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // 32 chars, no look-alikes
-  const bytes = crypto.randomBytes(6);
-  let code = '';
-  for (let i = 0; i < 6; i++) code += alphabet[bytes[i] % alphabet.length];
-  return `digi-${code}`;
+  return `DGH-${crypto.randomBytes(6).toString('hex').toUpperCase()}`;
 }
 
 // ---- Request shapes (the non-secret parts are built by sumit-mapping.ts) ----

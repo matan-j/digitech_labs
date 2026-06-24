@@ -141,8 +141,12 @@ export async function POST(request: Request) {
   ]);
   // GROW payment link process id (we stored it on the order at checkout).
   const processId = pick(payload, ['process_id', 'processId', 'paymentLinkProcessId']);
+  // GROW transaction id ({{3.data.transactionId}}). We persist it on the order as
+  // provider_transaction_id (via markOrderPaid below) so the invoice webhook
+  // (/api/webhooks/grow/invoice) can later match its `transactionCode` back to
+  // this order and attach the receipt.
   const transactionId = pick(payload, [
-    'payment_reference', 'transaction_id', 'transactionId', 'TransactionID',
+    'transaction_id', 'transactionId', 'TransactionID', 'payment_reference',
     'reference_number', 'asmachta', 'paymentId', 'payment_id', 'transactionToken',
   ]) ?? processId;
   const amount = num(pick(payload, ['payment_amount', 'amount', 'sum', 'Amount', 'Sum', 'total', 'paymentSum']));

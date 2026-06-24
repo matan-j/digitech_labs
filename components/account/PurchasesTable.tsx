@@ -29,6 +29,15 @@ const STATUS_LABEL: Record<PurchaseRow['status'], string> = {
   refunded: 'זוכה',
 };
 
+// Payment-provider display names. GROW orders are stored under the 'manual'
+// (Make.com lead) provider; SUMIT under 'sumit'. Show the buyer-facing name.
+const PROVIDER_LABEL: Record<string, string> = {
+  manual: 'GROW',
+  grow: 'GROW',
+  make: 'GROW',
+  sumit: 'SUMIT',
+};
+
 const STATUS_CLS: Record<PurchaseRow['status'], string> = {
   pending: 'bg-amber-100 text-amber-800',
   paid: 'bg-emerald-100 text-emerald-800',
@@ -203,6 +212,7 @@ const FIELD_LABELS: Record<string, string> = {
   payment_method: 'אמצעי תשלום',
   payment_type: 'סוג תשלום',
   payment_reference: 'אסמכתת תשלום',
+  transaction_id: 'מזהה עסקה',
   reference_number: 'מספר אסמכתא',
   process_id: 'מזהה תהליך',
   card_last4: '4 ספרות אחרונות',
@@ -281,7 +291,7 @@ export function PurchaseDetailModal({ publicOrderId, onClose }: { publicOrderId:
               <Row label="סוג" value={o.content_type} />
               <Row label="נוצר" value={formatDateTime(o.created_at)} />
               <Row label="עודכן" value={formatDateTime(o.updated_at)} />
-              <Row label="ספק תשלום" value={o.provider} mono />
+              <Row label="ספק תשלום" value={PROVIDER_LABEL[o.provider] ?? o.provider} />
               {o.status !== 'paid' && o.checkout_url && (
                 <Row
                   label="לינק תשלום"
