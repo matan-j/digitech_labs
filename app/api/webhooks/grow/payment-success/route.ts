@@ -84,13 +84,13 @@ function secretOk(request: Request, payload: Record<string, unknown>): boolean {
 
 /** Heuristic success check across GROW/Make field shapes. */
 function isSuccess(payload: Record<string, unknown>, transactionId: string | null): boolean {
-  const status = pick(payload, ['status', 'payment_status', 'transaction_status', 'StatusCode', 'transactionTypeId']);
+  const status = pick(payload, ['payment_status', 'status', 'transaction_status', 'StatusCode', 'statusCode']);
   if (status) {
     const s = status.toLowerCase();
-    if (['1', 'success', 'succeeded', 'paid', 'approved', 'completed', 'ok', 'true'].includes(s)) return true;
-    if (['0', 'failed', 'declined', 'error', 'cancelled', 'canceled', 'false'].includes(s)) return false;
+    if (['1', '2', 'success', 'succeeded', 'paid', 'approved', 'completed', 'ok', 'true', 'שולם', 'הצליח'].includes(s)) return true;
+    if (['0', 'failed', 'declined', 'error', 'cancelled', 'canceled', 'false', 'נכשל', 'בוטל'].includes(s)) return false;
   }
-  // No explicit status → treat a present transaction reference as success.
+  // No explicit/parseable status → treat a present transaction reference as success.
   return !!transactionId;
 }
 
@@ -133,28 +133,39 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
 
+  // Our local order id (digi-XXXXXX). In the Make/GROW payload it arrives as
+  // `order_number` (mapped from the GROW custom field cField1).
   const publicOrderId = pick(payload, [
-    'public_order_id', 'order', 'order_id', 'orderid', 'ExternalIdentifier',
-    'external_identifier', 'cField1', 'customField1', 'reference',
+    'order_number', 'public_order_id', 'order', 'order_id', 'orderid',
+    'ExternalIdentifier', 'external_identifier', 'cField1', 'customField1', 'reference',
   ]);
+  // GROW payment link process id (we stored it on the order at checkout).
+  const processId = pick(payload, ['process_id', 'processId', 'paymentLinkProcessId']);
   const transactionId = pick(payload, [
-    'transaction_id', 'transactionId', 'TransactionID', 'asmachta', 'paymentId',
-    'payment_id', 'transactionToken', 'processId',
-  ]);
-  const amount = num(pick(payload, ['amount', 'sum', 'Amount', 'Sum', 'total', 'paymentSum']));
+    'payment_reference', 'transaction_id', 'transactionId', 'TransactionID',
+    'reference_number', 'asmachta', 'paymentId', 'payment_id', 'transactionToken',
+  ]) ?? processId;
+  const amount = num(pick(payload, ['payment_amount', 'amount', 'sum', 'Amount', 'Sum', 'total', 'paymentSum']));
   const currency = pick(payload, ['currency', 'Currency', 'coin']) ?? 'ILS';
   const documentUrl = pick(payload, ['document_url', 'invoice_url', 'documentUrl', 'invoiceUrl', 'pdf', 'pdfUrl']);
+  // Buyer email — for cross-check / debugging. The order already binds the
+  // customer (user_id) + products (content_id), so order_number is the real link;
+  // email is logged so an unmatched payment can still be reconciled by hand.
+  const payerEmail = pick(payload, ['payer_email', 'email', 'customer_email', 'payerEmail', 'EmailAddress']);
 
+  // Match by our order id first, then by the GROW process id / transaction id we
+  // stored on the order at checkout.
   const order =
     (publicOrderId ? await getOrderByPublicId(publicOrderId) : null) ??
+    (processId ? await getOrderByProviderTransactionId(processId) : null) ??
     (transactionId ? await getOrderByProviderTransactionId(transactionId) : null);
 
   const eventId = `grow-${transactionId ?? publicOrderId ?? Math.abs(hashStr(JSON.stringify(payload)))}`;
 
   if (!order) {
     await logEvent({ orderId: null, eventId: `${eventId}-unmatched`, status: 'ignored', raw: payload, error: 'no matching order' });
-    console.error('[grow:webhook] no matching order', { publicOrderId, transactionId });
-    return NextResponse.json({ received: true, matched: false });
+    console.error('[grow:webhook] no matching order', { publicOrderId, processId, transactionId, payerEmail });
+    return NextResponse.json({ received: true, matched: false, order_number: publicOrderId ?? null });
   }
 
   // Idempotent: already settled → nothing to do.
