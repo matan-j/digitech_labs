@@ -109,6 +109,8 @@ export type DbChapter = {
   duration: string | null;
   body: string | null;
   position: number;
+  /** Hard lock (migration 028): when true the chapter + its lessons are blocked for EVERYONE. */
+  is_locked?: boolean;
   resources?: DbResource[];
 };
 

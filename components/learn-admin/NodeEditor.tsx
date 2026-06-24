@@ -32,6 +32,8 @@ type CommonProps = {
   onDragStart: () => void;
   onDragOver: (e: React.DragEvent) => void;
   onDrop: () => void;
+  /** Optional control rendered in the header row (e.g. the chapter lock toggle). */
+  headerAction?: React.ReactNode;
 };
 
 type Props =
@@ -97,7 +99,7 @@ const CONFIG: Record<NodeKind, {
 };
 
 export default function NodeEditor(props: Props) {
-  const { kind, node, onChange, onDelete, onDragStart, onDragOver, onDrop } = props;
+  const { kind, node, onChange, onDelete, onDragStart, onDragOver, onDrop, headerAction } = props;
   const cfg = CONFIG[kind];
 
   const [open, setOpen] = useState(false);
@@ -213,6 +215,7 @@ export default function NodeEditor(props: Props) {
         {saveBadge === 'saving' && <span className="text-[10px] text-blue-600">שומר…</span>}
         {saveBadge === 'saved' && <span className="text-[10px] text-emerald-600">✓ נשמר</span>}
         {saveBadge === 'error' && <span className="text-[10px] text-red-600">⚠ שגיאה</span>}
+        {headerAction}
         {kind === 'lesson' && (
           <GeneratePlaybookButton mode="video" lessonId={node.id} lessonTitle={node.title} />
         )}

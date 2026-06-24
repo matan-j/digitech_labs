@@ -24,7 +24,15 @@ export default async function LessonPage({
   const { course: courseSlug, lesson: lessonSlug } = await params;
   const data = await getLesson(courseSlug, lessonSlug);
   if (!data) notFound();
-  const { course, lesson, prev, next, lessonId, isPremium, accessLevel, courseId, isPreviewLesson } = data;
+  const { course, lesson, prev, next, lessonId, isPremium, accessLevel, courseId, isPreviewLesson, chapterLocked } = data;
+
+  // Per-chapter HARD lock (migration 028): blocked for EVERYONE — owners,
+  // subscribers, admin-granted users and admins alike. Overrides entitlements
+  // and free-preview. Send them back to the course landing.
+  if (chapterLocked) {
+    redirect(`/learn/courses/${courseSlug}`);
+  }
+
   // Table of contents only for long written lessons (3+ H2 sections).
   const lessonToc = lesson.body ? extractToc(toRichBlocks(lesson.body)) : [];
 

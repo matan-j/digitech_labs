@@ -1,6 +1,6 @@
 import 'server-only';
 import type { Course, Lesson } from './types';
-import { getCourseWithLessons, listPublishedContent } from './db';
+import { getCourseWithLessons, getDbChapterById, listPublishedContent } from './db';
 import type { CourseWithLessons, DbLesson, DbResource } from './types';
 
 // ----------------------------------------------------------------
@@ -74,6 +74,17 @@ export async function getLesson(courseSlug: string, lessonSlug: string) {
   const course = mapCourse(full);
   const idx = course.lessons.findIndex((l) => l.slug === lessonSlug);
   if (idx === -1) return null;
+
+  // Per-chapter hard lock (migration 028): a locked chapter is blocked for
+  // EVERYONE, overriding entitlements and free-preview. Look up the lesson's
+  // chapter and read its is_locked flag.
+  const dbLesson = full.lessons.find((l) => l.slug === lessonSlug) ?? null;
+  let chapterLocked = false;
+  if (dbLesson?.chapter_id) {
+    const chapter = await getDbChapterById(dbLesson.chapter_id);
+    chapterLocked = !!chapter?.is_locked;
+  }
+
   return {
     course,
     lesson: course.lessons[idx],
@@ -86,5 +97,7 @@ export async function getLesson(courseSlug: string, lessonSlug: string) {
     accessLevel: full.access_level ?? null,
     courseId: full.id,
     isPreviewLesson: full.lessons[idx]?.is_preview ?? false,
+    // Per-chapter hard lock (migration 028) — blocks everyone when true.
+    chapterLocked,
   };
 }

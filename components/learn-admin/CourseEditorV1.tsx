@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Trash2, ExternalLink, Plus, FileSpreadsheet, FolderPlus, BookPlus } from 'lucide-react';
+import { Trash2, ExternalLink, Plus, FileSpreadsheet, FolderPlus, BookPlus, Lock, LockOpen } from 'lucide-react';
 import FileUpload from './FileUpload';
 import SaveIndicator, { type SaveState } from './SaveIndicator';
 import GeneratePlaybookButton from './GeneratePlaybookButton';
@@ -826,6 +826,7 @@ function ChapterBlock({
         onDragStart={() => onDragStart({ kind: 'chapters', moduleId }, cIdx)}
         onDragOver={onDragOver}
         onDrop={() => onDrop({ kind: 'chapters', moduleId }, cIdx)}
+        headerAction={<ChapterLockToggle chapter={chapter} onChange={onChapterChange} />}
       />
       <div className="bg-brand-purple-50/20 p-3 space-y-2">
         {chapter.lessons.length > 0 && (
@@ -856,5 +857,56 @@ function ChapterBlock({
         </button>
       </div>
     </div>
+  );
+}
+
+// ============================================================
+// ChapterLockToggle — small lock icon button in the chapter header.
+// Locked = blocked for everyone (migration 028); optimistic + persists via PUT.
+// ============================================================
+function ChapterLockToggle({
+  chapter,
+  onChange,
+}: {
+  chapter: ChapterWithLessons;
+  onChange: (next: DbChapter) => void;
+}) {
+  const [locked, setLocked] = useState(!!chapter.is_locked);
+  const [busy, setBusy] = useState(false);
+
+  async function toggle(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (busy) return;
+    const next = !locked;
+    setBusy(true);
+    setLocked(next); // optimistic
+    const res = await fetch(`/api/chapters/${chapter.id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_locked: next }),
+    });
+    setBusy(false);
+    if (res.ok) {
+      onChange({ ...chapter, is_locked: next });
+    } else {
+      setLocked(!next); // rollback
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      disabled={busy}
+      aria-pressed={locked}
+      title={locked ? 'פרק נעול — חסום לכל המשתמשים. לחץ לפתיחה' : 'פרק פתוח. לחץ לנעילה לכולם'}
+      aria-label={locked ? 'פתח פרק' : 'נעל פרק'}
+      className={[
+        'p-1 rounded transition-colors disabled:opacity-50',
+        locked ? 'text-rose-600 hover:text-rose-700' : 'text-neutral-400 hover:text-brand-purple-700',
+      ].join(' ')}
+    >
+      {locked ? <Lock className="w-4 h-4" /> : <LockOpen className="w-4 h-4" />}
+    </button>
   );
 }
