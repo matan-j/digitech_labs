@@ -35,7 +35,13 @@ export default function ShareButton({ path, title }: { path: string; title?: str
     try {
       const url = await getShortUrl();
 
-      if (typeof navigator !== 'undefined' && 'share' in navigator) {
+      // Captured as a boolean so TS doesn't narrow `navigator` to `never` on the
+      // clipboard fallback path (`'share' in navigator` would do exactly that,
+      // since the DOM lib types always declare Navigator.share).
+      const canShare =
+        typeof navigator !== 'undefined' && typeof navigator.share === 'function';
+
+      if (canShare) {
         await navigator.share({ title: title ?? document.title, url });
         setState('idle');
         return;
