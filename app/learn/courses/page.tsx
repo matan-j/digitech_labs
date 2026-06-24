@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { listContent, progressByCourse } from '@/lib/learn/db';
 import { getCurrentUser, hasPremiumAccess } from '@/lib/auth';
 import { ArrowLeft, Lock, BookOpen } from 'lucide-react';
+import ShareButton from '@/components/learn/ShareButton';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'קורסים · DigiTech HUB' };
@@ -39,8 +40,13 @@ export default async function CoursesIndexPage() {
             const cp = progress[c.id];
             const pct = cp && cp.total > 0 ? Math.round((cp.done / cp.total) * 100) : 0;
             return (
+              <div key={c.id} className="relative">
+                {/* Share button sits opposite the premium badge; it's a sibling of
+                    the card <Link> so we never nest a <button> inside an <a>. */}
+                <div className="absolute top-3 left-3 z-10">
+                  <ShareButton path={`/learn/courses/${c.slug}`} title={c.title} />
+                </div>
               <Link
-                key={c.id}
                 href={`/learn/courses/${c.slug}`}
                 className="group block bg-white rounded-card border border-neutral-200 hover:border-brand-purple-700 transition-all overflow-hidden"
                 style={{ boxShadow: 'var(--shadow-card)' }}
@@ -108,6 +114,7 @@ export default async function CoursesIndexPage() {
                   </div>
                 </div>
               </Link>
+              </div>
             );
           })}
         </div>
