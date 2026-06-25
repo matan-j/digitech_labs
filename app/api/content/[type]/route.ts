@@ -2,18 +2,10 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import type { ContentType, GuideContentKind } from '@/lib/learn/types';
 import { resolveWriteActor, validateContentUrl } from '@/lib/learn/content-write';
+import { toSlug, ensureUniqueSlug } from '@/lib/utils/slug';
+import { translateToSlug } from '@/lib/ai/slug-translate';
 
 const VALID_TYPES: ContentType[] = ['course', 'guide', 'bundle'];
-
-function slugify(input: string): string {
-  return input
-    .normalize('NFKD')
-    .toLowerCase()
-    .replace(/[֐-׿]/g, '') // strip Hebrew chars for slug
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 60);
-}
 
 export async function POST(request: Request, ctx: { params: Promise<{ type: string }> }) {
   const actor = await resolveWriteActor();
@@ -40,22 +32,22 @@ export async function POST(request: Request, ctx: { params: Promise<{ type: stri
     return NextResponse.json({ error: 'invalid_video_url', message: urlCheck.message }, { status: 400 });
   }
 
-  let slug = (body.slug ?? '').trim() || slugify(title);
-  if (!slug) slug = `untitled-${Date.now()}`;
+  // Provided slug → sanitize as-is. Empty → AI-translate the Hebrew title to a
+  // readable English slug (falls back to transliteration if the model is down).
+  const provided = (body.slug ?? '').trim();
+  const base = (provided ? toSlug(provided) : await translateToSlug(title)) || `untitled-${Date.now()}`;
 
   const supabase = await createClient();
 
   // Ensure uniqueness — append -2, -3 etc. if needed
-  let candidate = slug;
-  for (let n = 2; n < 50; n++) {
+  const candidate = await ensureUniqueSlug(base, async (c) => {
     const { count } = await supabase
       .from('content_items')
       .select('id', { count: 'exact', head: true })
       .eq('type', type)
-      .eq('slug', candidate);
-    if ((count ?? 0) === 0) break;
-    candidate = `${slug}-${n}`;
-  }
+      .eq('slug', c);
+    return (count ?? 0) > 0;
+  });
 
   // Creator is forced to own the row; admin may assign any creator_id.
   const creatorId =

@@ -1,16 +1,8 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { createServiceClient } from '@/lib/supabase/server';
-
-function slugify(input: string): string {
-  return input
-    .normalize('NFKD')
-    .toLowerCase()
-    .replace(/[֐-׿]/g, '')
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 60);
-}
+import { toSlug, ensureUniqueSlug } from '@/lib/utils/slug';
+import { translateToSlug } from '@/lib/ai/slug-translate';
 
 export async function POST(request: Request) {
   const { profile } = await requireAdmin();
