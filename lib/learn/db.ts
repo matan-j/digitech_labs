@@ -159,6 +159,19 @@ export async function getBundleWithCourses(
   return { ...(bundle as ContentItem), type: 'bundle', courses };
 }
 
+/** Number of courses contained in each bundle (for card/section summaries). */
+export async function countBundleCourses(bundleIds: string[]): Promise<Map<string, number>> {
+  const counts = new Map<string, number>();
+  if (bundleIds.length === 0) return counts;
+  const supabase = await db();
+  const { data } = await supabase.from('bundle_items').select('bundle_id').in('bundle_id', bundleIds);
+  for (const row of data ?? []) {
+    const id = (row as { bundle_id: string }).bundle_id;
+    counts.set(id, (counts.get(id) ?? 0) + 1);
+  }
+  return counts;
+}
+
 export async function getContentById(id: string): Promise<ContentItem | null> {
   const supabase = await db();
   const { data, error } = await supabase

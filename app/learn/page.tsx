@@ -2,8 +2,9 @@ import Link from 'next/link';
 import { BookOpen, Compass, BookText, CheckCircle2, Library, ArrowLeft } from 'lucide-react';
 import CourseCard from '@/components/learn/CourseCard';
 import GuideCard from '@/components/learn/GuideCard';
+import BundleCard from '@/components/learn/BundleCard';
 import { getCurrentUser } from '@/lib/auth';
-import { getCompletedLessonIds, listContent, listPlaybooks, listPublishedContent } from '@/lib/learn/db';
+import { getCompletedLessonIds, listContent, listPlaybooks, listPublishedContent, countBundleCourses } from '@/lib/learn/db';
 import { isPubliclyListed } from '@/lib/learn/access';
 import { listOwnedResourceIds } from '@/lib/payments/entitlement-service';
 import { getBrandCoverUrl } from '@/lib/brand';
@@ -20,19 +21,26 @@ export default async function LearnDashboard() {
   const auth = await getCurrentUser();
   const isAdmin = auth?.profile.role === 'admin';
   const hasAccess = !!(isAdmin || auth?.profile.subscription_status === 'active');
-  const [courseItems, completed, guides, playbooks, coverUrl, ownedIds] = await Promise.all([
+  const [courseItems, completed, guides, playbooks, coverUrl, ownedIds, bundleItems, ownedBundleIds] = await Promise.all([
     listPublishedContent('course'),
     auth ? getCompletedLessonIds(auth.userId) : Promise.resolve([] as string[]),
     listContent('guide'),
     listPlaybooks(),
     getBrandCoverUrl(),
     auth ? listOwnedResourceIds('course') : Promise.resolve(new Set<string>()),
+    listPublishedContent('bundle'),
+    auth ? listOwnedResourceIds('bundle') : Promise.resolve(new Set<string>()),
   ]);
   // Owned (purchased/assigned) courses first, then the rest (stable sort).
   const courses = courseItems
     .filter(isPubliclyListed)
     .sort((a, b) => Number(ownedIds.has(b.id)) - Number(ownedIds.has(a.id)));
   const publishedGuides = guides.filter((g) => g.status === 'published');
+  // Bundles — owned first, then the rest; counts power the "X קורסים" badge.
+  const bundles = bundleItems
+    .filter(isPubliclyListed)
+    .sort((a, b) => Number(ownedBundleIds.has(b.id)) - Number(ownedBundleIds.has(a.id)));
+  const bundleCounts = await countBundleCourses(bundles.map((b) => b.id));
   const displayName = auth?.profile.full_name ?? (auth?.email ? firstNameFromEmail(auth.email) : '');
 
   return (
@@ -207,6 +215,28 @@ export default async function LearnDashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {publishedGuides.slice(0, 3).map((g) => (
               <GuideCard key={g.id} guide={g} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ===== Bundles ===== */}
+      {bundles.length > 0 && (
+        <section className="mt-12">
+          <div className="flex items-end justify-between mb-5">
+            <div>
+              <h2 className="text-xl sm:text-2xl font-extrabold text-neutral-950">באנדלים</h2>
+              <p className="text-sm text-neutral-500 mt-1">חבילות קורסים במחיר אחד משתלם.</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {bundles.slice(0, 6).map((b) => (
+              <BundleCard
+                key={b.id}
+                bundle={b}
+                courseCount={bundleCounts.get(b.id) ?? 0}
+                owned={ownedBundleIds.has(b.id)}
+              />
             ))}
           </div>
         </section>
