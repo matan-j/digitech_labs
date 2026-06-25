@@ -4,7 +4,7 @@ import type { AccessLevel, CatalogVisibility } from '@/lib/learn/types';
 
 export const ACCESS_LEVEL_LABEL: Record<AccessLevel, string> = {
   open: 'פתוח — תוכן ציבורי מלא',
-  login_required: 'דורש התחברות',
+  login_required: 'דורש מועדון',
   purchase_required: 'דורש רכישה',
   subscription_required: 'דורש מנוי',
 };
