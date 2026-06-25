@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { randomUUID } from 'crypto';
-import { createServiceClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
 
 const POPUPS_BUCKET = 'popups';
 const MAX_BYTES = 5 * 1024 * 1024; // 5 MB
@@ -21,7 +21,9 @@ const EXT: Record<string, string> = {
 };
 
 async function requireAdminOrNull() {
-  const supa = createServiceClient();
+  // Cookie-aware client → reads the logged-in session. The service client has
+  // no cookies, so getUser() there always returns null (the original bug).
+  const supa = await createClient();
   const { data: { user } } = await supa.auth.getUser();
   if (!user) return null;
   const { data: profile } = await supa.from('profiles').select('role').eq('id', user.id).single();
