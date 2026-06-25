@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowRight, ArrowLeft, Lock, Check, Package, Layers } from 'lucide-react';
-import { getBundleWithCourses } from '@/lib/learn/db';
+import { getPublicBundleWithCourses } from '@/lib/learn/db';
 import { getCurrentUser, hasPremiumAccess } from '@/lib/auth';
 import { renderMarkdownLite } from '@/lib/learn/markdown';
 import { decideAccess, resolveAccessLevel, resolveDisplayPrice, formatPrice } from '@/lib/learn/access';
@@ -16,17 +16,16 @@ export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: { params: Promise<{ bundle: string }> }) {
   const { bundle: slug } = await params;
-  const b = (await getBundleWithCourses(slug)) ?? (await getBundleWithCourses(slug, { source: 'public' }));
+  const b = await getPublicBundleWithCourses(slug);
   return { title: b ? `${b.title} — Digitech Learning Hub` : 'חבילה לא נמצאה' };
 }
 
 export default async function BundleLanding({ params }: { params: Promise<{ bundle: string }> }) {
   const { bundle: slug } = await params;
-  // Base read for admin / entitled viewers; public-view fallback so a guest or
-  // non-buyer still sees the bundle (locked) with its course list + buy CTA.
-  const bundle =
-    (await getBundleWithCourses(slug)) ?? (await getBundleWithCourses(slug, { source: 'public' }));
-  if (!bundle || bundle.status !== 'published') notFound();
+  // Service-client read (RLS-independent) so EVERY visitor — guest, buyer, or
+  // admin — sees the same published bundle + its contained-course list.
+  const bundle = await getPublicBundleWithCourses(slug);
+  if (!bundle) notFound();
 
   const auth = await getCurrentUser();
   const hasPremium = !!auth && hasPremiumAccess(auth.profile);
@@ -175,8 +174,9 @@ export default async function BundleLanding({ params }: { params: Promise<{ bund
   );
 }
 
-/** A course inside the bundle — communicates "what you get", links to the course. */
+/** A course inside the bundle — communicates "what you get" + its standalone value. */
 function IncludedCourseCard({ course: c, owned }: { course: BundleCourseRef; owned: boolean }) {
+  const dp = resolveDisplayPrice(c);
   return (
     <Link
       href={`/learn/courses/${c.slug}`}
@@ -207,7 +207,11 @@ function IncludedCourseCard({ course: c, owned }: { course: BundleCourseRef; own
           <Check className="w-3.5 h-3.5" />
           כלול בחבילה
         </span>
-        <ArrowLeft className="h-4 w-4 text-neutral-400 transition-transform group-hover:-translate-x-0.5" />
+        {dp.final && (
+          <span className="text-xs font-bold text-neutral-500">
+            בשווי <span className="text-neutral-900">{dp.final}</span>
+          </span>
+        )}
       </div>
     </Link>
   );

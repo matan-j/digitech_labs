@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server';
+import { createClient, createServiceClient } from '@/lib/supabase/server';
 import type {
   BundleCourseRef,
   BundleWithCourses,
@@ -159,11 +159,54 @@ export async function getBundleWithCourses(
   return { ...(bundle as ContentItem), type: 'bundle', courses };
 }
 
-/** Number of courses contained in each bundle (for card/section summaries). */
+/**
+ * Customer-facing bundle landing read. Uses the SERVICE client (bypasses RLS),
+ * exactly like the purchase/cart server-trusted reads, so the bundle + its
+ * contained-course list resolve for ANY visitor regardless of RLS policy state
+ * — the RLS-aware path hid the course list from non-admins. Only PUBLISHED
+ * catalog metadata is exposed (no bodies); unpublished contained courses are
+ * filtered out so a customer never sees a course they can't open.
+ */
+export async function getPublicBundleWithCourses(slug: string): Promise<BundleWithCourses | null> {
+  const supabase = createServiceClient();
+  const { data: bundle } = await supabase
+    .from('content_items')
+    .select('*')
+    .eq('type', 'bundle')
+    .eq('slug', slug)
+    .eq('status', 'published')
+    .maybeSingle();
+  if (!bundle) return null;
+
+  const { data: links } = await supabase
+    .from('bundle_items')
+    .select('course_id, position')
+    .eq('bundle_id', (bundle as ContentItem).id)
+    .order('position', { ascending: true });
+
+  const courseIds = (links ?? []).map((r) => (r as { course_id: string }).course_id);
+  let courses: BundleCourseRef[] = [];
+  if (courseIds.length > 0) {
+    const { data: cs } = await supabase
+      .from('content_items')
+      .select('id, slug, title, cover_url, price_amount, sale_amount, price_currency, status')
+      .in('id', courseIds)
+      .eq('status', 'published');
+    const byId = new Map((cs ?? []).map((c) => [(c as BundleCourseRef).id, c as BundleCourseRef]));
+    courses = courseIds.map((id) => byId.get(id)).filter(Boolean) as BundleCourseRef[];
+  }
+
+  return { ...(bundle as ContentItem), type: 'bundle', courses };
+}
+
+/**
+ * Number of courses contained in each bundle (for card/section summaries).
+ * Service client so the count is correct for every viewer (RLS-independent).
+ */
 export async function countBundleCourses(bundleIds: string[]): Promise<Map<string, number>> {
   const counts = new Map<string, number>();
   if (bundleIds.length === 0) return counts;
-  const supabase = await db();
+  const supabase = createServiceClient();
   const { data } = await supabase.from('bundle_items').select('bundle_id').in('bundle_id', bundleIds);
   for (const row of data ?? []) {
     const id = (row as { bundle_id: string }).bundle_id;
