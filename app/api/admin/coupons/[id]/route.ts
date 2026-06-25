@@ -10,7 +10,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { createServiceClient } from '@/lib/supabase/server';
-import { parseCoupon } from '@/lib/payments/coupon-admin';
+import { parseCoupon, buildCouponProducts } from '@/lib/payments/coupon-admin';
 
 export const runtime = 'nodejs';
 
@@ -50,9 +50,7 @@ export async function PATCH(request: Request, ctx: { params: Promise<{ id: strin
   // Replace the product + customer links wholesale (simple + idempotent).
   await supabase.from('coupon_products').delete().eq('coupon_id', id);
   if (parsed.productIds.length) {
-    await supabase.from('coupon_products').insert(
-      parsed.productIds.map((content_id) => ({ coupon_id: id, content_id, content_type: 'course' })),
-    );
+    await supabase.from('coupon_products').insert(await buildCouponProducts(supabase, id, parsed.productIds));
   }
   await supabase.from('coupon_customers').delete().eq('coupon_id', id);
   if (parsed.customerIds.length) {

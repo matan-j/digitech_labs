@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, X, Loader2, Trash2, GraduationCap, User as UserIcon, Ticket } from 'lucide-react';
+import { Plus, X, Loader2, Trash2, GraduationCap, Package, User as UserIcon, Ticket } from 'lucide-react';
 
 export type CouponRow = {
   id: string;
@@ -20,8 +20,11 @@ export type CouponRow = {
   usage_count: number;
 };
 
-export type CourseOption = { id: string; title: string };
+export type ProductOption = { id: string; title: string; type: string };
 export type UserOption = { id: string; email: string; name: string | null };
+
+// Hebrew label per sellable content_items type (shown as the dropdown prefix).
+const PRODUCT_TYPE_LABEL: Record<string, string> = { course: 'קורס', bundle: 'באנדל', guide: 'הדרכה' };
 
 const ONE_TIME_LABEL: Record<CouponRow['one_time_scope'], string> = {
   none: 'רב-פעמי',
@@ -49,11 +52,11 @@ function statusOf(c: CouponRow): { label: string; cls: string } {
 
 export default function CouponsTable({
   coupons,
-  courses,
+  products,
   users,
 }: {
   coupons: CouponRow[];
-  courses: CourseOption[];
+  products: ProductOption[];
   users: UserOption[];
 }) {
   const router = useRouter();
@@ -89,7 +92,7 @@ export default function CouponsTable({
       {showCreate && (
         <CouponForm
           coupon={null}
-          courses={courses}
+          products={products}
           users={users}
           onClose={() => setShowCreate(false)}
           onSaved={() => { setShowCreate(false); router.refresh(); }}
@@ -98,7 +101,7 @@ export default function CouponsTable({
       {editing && (
         <CouponForm
           coupon={editing}
-          courses={courses}
+          products={products}
           users={users}
           onClose={() => setEditing(null)}
           onSaved={() => { setEditing(null); router.refresh(); }}
@@ -237,13 +240,13 @@ function toLocalInput(iso: string | null): string {
 
 function CouponForm({
   coupon,
-  courses,
+  products,
   users,
   onClose,
   onSaved,
 }: {
   coupon: CouponRow | null;
-  courses: CourseOption[];
+  products: ProductOption[];
   users: UserOption[];
   onClose: () => void;
   onSaved: () => void;
@@ -412,12 +415,15 @@ function CouponForm({
                 <div className="flex items-center gap-2 text-neutral-500 text-sm py-2"><Loader2 className="w-4 h-4 animate-spin" /> טוען…</div>
               ) : (
                 <TagPicker
-                  options={courses.map((c) => ({ id: c.id, label: c.title }))}
+                  options={products.map((p) => ({
+                    id: p.id,
+                    label: `${PRODUCT_TYPE_LABEL[p.type] ?? p.type} | ${p.title}`,
+                  }))}
                   selectedIds={productIds}
                   onChange={setProductIds}
-                  placeholder="בחר קורס לשיוך…"
+                  placeholder="בחר מוצר לשיוך…"
                   emptyText="לא נבחרו מוצרים — בחר לפחות אחד."
-                  Icon={GraduationCap}
+                  Icon={Package}
                 />
               )
             )}

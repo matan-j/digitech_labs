@@ -4,6 +4,28 @@
 // route files because a Next.js route module may only export HTTP handlers.
 // ============================================================
 
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+/**
+ * Build coupon_products rows, resolving each product's real content_items.type
+ * (course / bundle / guide) server-side so the link stores the correct type.
+ * Unknown ids fall back to 'course'.
+ */
+export async function buildCouponProducts(
+  supabase: SupabaseClient,
+  couponId: string,
+  productIds: string[],
+): Promise<{ coupon_id: string; content_id: string; content_type: string }[]> {
+  if (productIds.length === 0) return [];
+  const { data } = await supabase.from('content_items').select('id, type').in('id', productIds);
+  const typeById = new Map((data ?? []).map((r) => [r.id as string, r.type as string]));
+  return productIds.map((content_id) => ({
+    coupon_id: couponId,
+    content_id,
+    content_type: typeById.get(content_id) ?? 'course',
+  }));
+}
+
 export type CouponInput = {
   code?: unknown;
   internal_name?: unknown;

@@ -8,7 +8,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
 import { createServiceClient } from '@/lib/supabase/server';
-import { parseCoupon, type CouponInput } from '@/lib/payments/coupon-admin';
+import { parseCoupon, buildCouponProducts, type CouponInput } from '@/lib/payments/coupon-admin';
 
 export const runtime = 'nodejs';
 
@@ -50,9 +50,7 @@ export async function POST(request: Request) {
 
   const couponId = coupon.id as string;
   if (parsed.productIds.length) {
-    await supabase.from('coupon_products').insert(
-      parsed.productIds.map((content_id) => ({ coupon_id: couponId, content_id, content_type: 'course' })),
-    );
+    await supabase.from('coupon_products').insert(await buildCouponProducts(supabase, couponId, parsed.productIds));
   }
   if (parsed.customerIds.length) {
     await supabase.from('coupon_customers').insert(
