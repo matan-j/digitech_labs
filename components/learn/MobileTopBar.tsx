@@ -10,6 +10,7 @@ import LogoutButton from '@/components/auth/LogoutButton';
 const NAV = [
   { label: 'עמוד הבית', href: '/learn' },
   { label: 'קורסים', href: '/learn/courses' },
+  { label: 'חבילות', href: '/learn/bundles' },
   { label: 'הדרכות', href: '/learn/guides' },
   { label: 'פלייבוקים', href: '/learn/playbooks' },
   { label: 'יוצרים', href: '/learn/creators' },

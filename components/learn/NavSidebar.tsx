@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  Home, BookOpen, Compass, BookText, Users, ShieldCheck, LogOut, LayoutDashboard,
+  Home, BookOpen, Compass, BookText, Users, ShieldCheck, LogOut, LayoutDashboard, Layers,
 } from 'lucide-react';
 import type { AuthState } from '@/lib/auth';
 import type { BrandSettings, SocialKey } from '@/lib/brand';
@@ -22,6 +22,7 @@ type NavItem = {
 const TOP: NavItem[] = [
   { label: 'עמוד הבית', href: '/learn', icon: Home },
   { label: 'קורסים', href: '/learn/courses', icon: BookOpen },
+  { label: 'חבילות', href: '/learn/bundles', icon: Layers },
   { label: 'הדרכות', href: '/learn/guides', icon: Compass },
   { label: 'פלייבוקים', href: '/learn/playbooks', icon: BookText },
   { label: 'יוצרים', href: '/learn/creators', icon: Users },
