@@ -30,9 +30,6 @@ type Props = {
   /** Omit to render visibility-only (e.g. playlists). */
   accessLevel?: AccessLevel;
   onAccessLevel?: (v: AccessLevel) => void;
-  /** Omit to hide the preview toggle (e.g. playlists). */
-  previewEnabled?: boolean;
-  onPreviewEnabled?: (v: boolean) => void;
   /** Pass price props to render the price block (content_items only). */
   priceAmount?: string;
   onPriceAmount?: (v: string) => void;
@@ -56,8 +53,6 @@ export default function AccessControlFields({
   onCatalogVisibility,
   accessLevel,
   onAccessLevel,
-  previewEnabled,
-  onPreviewEnabled,
   priceAmount,
   onPriceAmount,
   saleAmount,
@@ -66,7 +61,6 @@ export default function AccessControlFields({
   onPriceCurrency,
 }: Props) {
   const hasAccess = accessLevel !== undefined && onAccessLevel !== undefined;
-  const hasPreview = previewEnabled !== undefined && onPreviewEnabled !== undefined;
   const hasPrice =
     priceAmount !== undefined &&
     onPriceAmount !== undefined &&
@@ -182,17 +176,6 @@ export default function AccessControlFields({
         )}
       </div>
 
-      {hasPreview && accessLevel !== 'open' && (
-        <label className="mt-4 flex items-center gap-2 text-xs cursor-pointer">
-          <input
-            type="checkbox"
-            checked={previewEnabled}
-            onChange={(e) => onPreviewEnabled!(e.target.checked)}
-            className="w-3.5 h-3.5 accent-brand-purple-700"
-          />
-          <span className="font-medium text-neutral-700">אפשר תצוגה מקדימה ציבורית מוגבלת</span>
-        </label>
-      )}
     </section>
   );
 }

@@ -27,7 +27,6 @@ export default function PlaybookEditor({ initial }: Props) {
   // Access model (migration 018)
   const [accessLevel, setAccessLevel] = useState<AccessLevel>(initial.access_level ?? 'open');
   const [catalogVisibility, setCatalogVisibility] = useState<CatalogVisibility>(initial.catalog_visibility ?? 'public');
-  const [previewEnabled, setPreviewEnabled] = useState(initial.preview_enabled ?? false);
   const [saveState, setSaveState] = useState<SaveState>('idle');
   const dirty = useRef(false);
   const saveTimer = useRef<NodeJS.Timeout | null>(null);
@@ -70,7 +69,6 @@ export default function PlaybookEditor({ initial }: Props) {
       html_content: htmlContent,
       access_level: accessLevel,
       catalog_visibility: catalogVisibility,
-      preview_enabled: previewEnabled,
       ...extra,
     };
   }
@@ -86,7 +84,7 @@ export default function PlaybookEditor({ initial }: Props) {
       persist(buildPayload());
     }, 1200);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, tagline, description, audience, coverUrl, videoUrl, domain, isPremium, htmlContent, accessLevel, catalogVisibility, previewEnabled]);
+  }, [title, tagline, description, audience, coverUrl, videoUrl, domain, isPremium, htmlContent, accessLevel, catalogVisibility]);
 
   useEffect(() => () => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -240,8 +238,6 @@ export default function PlaybookEditor({ initial }: Props) {
         onAccessLevel={setAccessLevel}
         catalogVisibility={catalogVisibility}
         onCatalogVisibility={setCatalogVisibility}
-        previewEnabled={previewEnabled}
-        onPreviewEnabled={setPreviewEnabled}
       />
 
       <section className="bg-white rounded-2xl border border-neutral-200 p-5">

@@ -10,7 +10,8 @@ import SaveIndicator, { type SaveState } from './SaveIndicator';
 import YouTubeField from './YouTubeField';
 import VimeoField from './VimeoField';
 import AccessControlFields from './AccessControlFields';
-import { DOMAINS, type DomainId, isDomainId } from '@/lib/learn/domains';
+import { type DomainId } from '@/lib/learn/domains';
+import { useDomains } from '@/lib/learn/useDomains';
 import { GUIDE_CONTENT_KINDS, type AccessLevel, type CatalogVisibility, type GuideBlock, type GuideContentKind, type GuideItem } from '@/lib/learn/types';
 import { CONTENT_KIND_LABEL } from '@/lib/learn/placeholder';
 
@@ -28,6 +29,7 @@ type Props = {
 
 export default function GuideEditor({ initial, mode = 'admin', creators = [], backHref = '/admin/guides' }: Props) {
   const router = useRouter();
+  const { domains } = useDomains();
   const [title, setTitle] = useState(initial.title);
   const [tagline, setTagline] = useState(initial.tagline ?? '');
   const [description, setDescription] = useState(initial.description ?? '');
@@ -51,7 +53,6 @@ export default function GuideEditor({ initial, mode = 'admin', creators = [], ba
   // Access model (migration 018)
   const [accessLevel, setAccessLevel] = useState<AccessLevel>(initial.access_level ?? 'open');
   const [catalogVisibility, setCatalogVisibility] = useState<CatalogVisibility>(initial.catalog_visibility ?? 'public');
-  const [previewEnabled, setPreviewEnabled] = useState(initial.preview_enabled ?? false);
   const [priceAmount, setPriceAmount] = useState<string>(initial.price_amount != null ? String(initial.price_amount) : '');
   const [priceCurrency, setPriceCurrency] = useState(initial.price_currency ?? 'ILS');
 
@@ -85,7 +86,6 @@ export default function GuideEditor({ initial, mode = 'admin', creators = [], ba
       og_image_url: ogImageUrl || null,
       access_level: accessLevel,
       catalog_visibility: catalogVisibility,
-      preview_enabled: previewEnabled,
       price_amount: accessLevel === 'purchase_required' && priceAmount ? Number(priceAmount) : null,
       price_currency: priceCurrency,
     };
@@ -94,7 +94,7 @@ export default function GuideEditor({ initial, mode = 'admin', creators = [], ba
       base.is_featured = isFeatured;
     }
     return { ...base, ...extra };
-  }, [title, tagline, description, audience, coverUrl, domain, isPremium, blocks, contentKind, contentUrl, duration, seoTitle, seoDescription, ogImageUrl, creatorId, isFeatured, accessLevel, catalogVisibility, previewEnabled, priceAmount, priceCurrency, mode]);
+  }, [title, tagline, description, audience, coverUrl, domain, isPremium, blocks, contentKind, contentUrl, duration, seoTitle, seoDescription, ogImageUrl, creatorId, isFeatured, accessLevel, catalogVisibility, priceAmount, priceCurrency, mode]);
 
   const persist = useCallback(async (payload: Record<string, unknown>) => {
     setSaveState('saving');
@@ -135,7 +135,7 @@ export default function GuideEditor({ initial, mode = 'admin', creators = [], ba
       persist(buildPayload());
     }, 1200);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, tagline, description, audience, coverUrl, domain, isPremium, blocks, contentKind, contentUrl, duration, seoTitle, seoDescription, ogImageUrl, creatorId, isFeatured, accessLevel, catalogVisibility, previewEnabled, priceAmount, priceCurrency]);
+  }, [title, tagline, description, audience, coverUrl, domain, isPremium, blocks, contentKind, contentUrl, duration, seoTitle, seoDescription, ogImageUrl, creatorId, isFeatured, accessLevel, catalogVisibility, priceAmount, priceCurrency]);
 
   useEffect(() => () => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -383,13 +383,12 @@ export default function GuideEditor({ initial, mode = 'admin', creators = [], ba
                 value={domain ?? ''}
                 onChange={(e) => {
                   const v = e.target.value;
-                  if (v === '') setDomain(null);
-                  else if (isDomainId(v)) setDomain(v);
+                  setDomain(v === '' ? null : v);
                 }}
                 className="w-full px-3 py-2 rounded-md border border-neutral-200 focus:border-brand-purple-400 focus:outline-none text-sm bg-white"
               >
                 <option value="">— ללא תחום —</option>
-                {DOMAINS.map((d) => (<option key={d.id} value={d.id}>{d.label}</option>))}
+                {domains.map((d) => (<option key={d.id} value={d.id}>{d.label}</option>))}
               </select>
             </div>
             <div>
@@ -481,8 +480,6 @@ export default function GuideEditor({ initial, mode = 'admin', creators = [], ba
         onAccessLevel={setAccessLevel}
         catalogVisibility={catalogVisibility}
         onCatalogVisibility={setCatalogVisibility}
-        previewEnabled={previewEnabled}
-        onPreviewEnabled={setPreviewEnabled}
         priceAmount={priceAmount}
         onPriceAmount={setPriceAmount}
         priceCurrency={priceCurrency}

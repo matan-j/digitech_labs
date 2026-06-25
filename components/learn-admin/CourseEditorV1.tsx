@@ -49,7 +49,6 @@ export default function CourseEditorV1({ initial }: Props) {
   // Access model (migration 018)
   const [accessLevel, setAccessLevel] = useState<AccessLevel>(initial.access_level ?? 'open');
   const [catalogVisibility, setCatalogVisibility] = useState<CatalogVisibility>(initial.catalog_visibility ?? 'public');
-  const [previewEnabled, setPreviewEnabled] = useState(initial.preview_enabled ?? false);
   const [priceAmount, setPriceAmount] = useState<string>(initial.price_amount != null ? String(initial.price_amount) : '');
   const [saleAmount, setSaleAmount] = useState<string>(initial.sale_amount != null ? String(initial.sale_amount) : '');
   const [priceCurrency, setPriceCurrency] = useState(initial.price_currency ?? 'ILS');
@@ -74,12 +73,11 @@ export default function CourseEditorV1({ initial }: Props) {
     is_premium: isPremium,
     access_level: accessLevel,
     catalog_visibility: catalogVisibility,
-    preview_enabled: previewEnabled,
     price_amount: accessLevel === 'purchase_required' && priceAmount ? Number(priceAmount) : null,
     sale_amount: accessLevel === 'purchase_required' && saleAmount ? Number(saleAmount) : null,
     price_currency: priceCurrency,
     ...extra,
-  }), [title, tagline, description, audience, coverUrl, coverSquareUrl, isPremium, accessLevel, catalogVisibility, previewEnabled, priceAmount, saleAmount, priceCurrency]);
+  }), [title, tagline, description, audience, coverUrl, coverSquareUrl, isPremium, accessLevel, catalogVisibility, priceAmount, saleAmount, priceCurrency]);
 
   const persist = useCallback(async (payload: Record<string, unknown>) => {
     setSaveState('saving');
@@ -107,7 +105,7 @@ export default function CourseEditorV1({ initial }: Props) {
       persist(buildMeta());
     }, 1200);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, tagline, description, audience, coverUrl, coverSquareUrl, isPremium, accessLevel, catalogVisibility, previewEnabled, priceAmount, saleAmount, priceCurrency]);
+  }, [title, tagline, description, audience, coverUrl, coverSquareUrl, isPremium, accessLevel, catalogVisibility, priceAmount, saleAmount, priceCurrency]);
 
   useEffect(() => () => {
     if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -614,8 +612,6 @@ export default function CourseEditorV1({ initial }: Props) {
         onAccessLevel={setAccessLevel}
         catalogVisibility={catalogVisibility}
         onCatalogVisibility={setCatalogVisibility}
-        previewEnabled={previewEnabled}
-        onPreviewEnabled={setPreviewEnabled}
         priceAmount={priceAmount}
         onPriceAmount={setPriceAmount}
         saleAmount={saleAmount}
@@ -902,8 +898,9 @@ function ChapterBlock({
 
 // ============================================================
 // LockToggle — small lock icon button in a node header (module / chapter /
-// lesson). Locked = blocked for everyone (migrations 029/031), cascading down
-// the hierarchy. Optimistic + persists via PUT to the node's endpoint.
+// lesson). Locked = requires purchase: members/buyers/admins see it, everyone
+// else does not. Unlocked = free for everyone (including non-buyers). Cascades
+// down the hierarchy. Optimistic + persists via PUT to the node's endpoint.
 // ============================================================
 function LockToggle({
   endpoint,
@@ -944,7 +941,7 @@ function LockToggle({
       onClick={toggle}
       disabled={busy}
       aria-pressed={isLocked}
-      title={isLocked ? `${kindLabel} נעול — חסום לכל המשתמשים (כולל מי שרכש). לחץ לפתיחה` : `${kindLabel} פתוח. לחץ לנעילה לכולם`}
+      title={isLocked ? `${kindLabel} נעול — דורש רכישה (רק מי שרכש/חבר רואה). לחץ לפתיחה לכולם` : `${kindLabel} פתוח — חופשי לכולם, גם למי שלא רכש. לחץ לנעילה`}
       aria-label={isLocked ? `פתח ${kindLabel}` : `נעל ${kindLabel}`}
       className={[
         'p-1 rounded transition-colors disabled:opacity-50',

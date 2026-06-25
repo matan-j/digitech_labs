@@ -35,15 +35,7 @@ export default async function LessonPage({
     if (publicCourse) redirect(`/learn/courses/${courseSlug}`);
     notFound();
   }
-  const { course, lesson, prev, next, lessonId, isPremium, accessLevel, courseId, isPreviewLesson, hardLocked } = data;
-
-  // Hierarchical HARD lock (migrations 029/031): blocked for EVERYONE — owners,
-  // subscribers, admin-granted users and admins alike — when the lesson's
-  // module, chapter, or the lesson itself is locked. Overrides entitlements and
-  // free-preview. Send them back to the course landing.
-  if (hardLocked) {
-    redirect(`/learn/courses/${courseSlug}`);
-  }
+  const { course, lesson, prev, next, lessonId, isPremium, accessLevel, courseId, hardLocked } = data;
 
   // Table of contents only for long written lessons (3+ H2 sections).
   const lessonToc = lesson.body ? extractToc(toRichBlocks(lesson.body)) : [];
@@ -51,31 +43,29 @@ export default async function LessonPage({
   const returnTo = `/learn/courses/${courseSlug}/${lessonSlug}`;
   const auth = await getCurrentUser();
 
-  // Legacy subscription gate (is_premium / subscription_required). An active
-  // per-course entitlement (purchase / admin / gift) bypasses the premium lock
-  // just like a live subscription — mirroring has_content_access() in the DB.
-  // Free-preview lessons (is_preview) stay open to non-subscribers, mirroring
-  // the purchase_required branch below.
-  if (isPremium && !isPreviewLesson) {
-    if (!auth) redirect(`/login?return=${encodeURIComponent(returnTo)}`);
-    const entitled = hasPremiumAccess(auth.profile) || (await hasActiveEntitlement('course', courseId));
-    if (!entitled) {
-      redirect(`/upgrade?return=${encodeURIComponent(returnTo)}`);
+  // Per-lesson lock model: an UNLOCKED lesson (the lesson + its chapter + its
+  // module are all unlocked) is FREE for everyone — no gate. A LOCKED lesson
+  // requires the course's access (membership / purchase / login); buyers,
+  // members and admins see it, everyone else is sent to the landing CTA.
+  if (hardLocked) {
+    // Membership (is_premium / subscription_required). A per-course entitlement
+    // (purchase / admin / gift) unlocks it like a live membership does.
+    if (isPremium) {
+      if (!auth) redirect(`/login?return=${encodeURIComponent(returnTo)}`);
+      const entitled = hasPremiumAccess(auth.profile) || (await hasActiveEntitlement('course', courseId));
+      if (!entitled) redirect(`/upgrade?return=${encodeURIComponent(returnTo)}`);
     }
-  }
-
-  // login_required courses: body needs a session.
-  if (accessLevel === 'login_required' && !auth) {
-    redirect(`/login?return=${encodeURIComponent(returnTo)}`);
-  }
-
-  // purchase_required: free preview lessons stay open; everything else needs an
-  // active entitlement (admins/subscribers exempt). Non-entitled viewers are
-  // sent to the course landing where the lock + purchase CTA lives.
-  if (accessLevel === 'purchase_required' && !isPreviewLesson) {
-    if (!auth) redirect(`/login?return=${encodeURIComponent(returnTo)}`);
-    const entitled = hasPremiumAccess(auth.profile) || (await hasActiveEntitlement('course', courseId));
-    if (!entitled) redirect(`/learn/courses/${courseSlug}`);
+    // login_required courses: a locked lesson needs a session.
+    if (accessLevel === 'login_required' && !auth) {
+      redirect(`/login?return=${encodeURIComponent(returnTo)}`);
+    }
+    // purchase_required: a locked lesson needs an active entitlement
+    // (admins/members exempt). Others go to the landing where the CTA lives.
+    if (accessLevel === 'purchase_required') {
+      if (!auth) redirect(`/login?return=${encodeURIComponent(returnTo)}`);
+      const entitled = hasPremiumAccess(auth.profile) || (await hasActiveEntitlement('course', courseId));
+      if (!entitled) redirect(`/learn/courses/${courseSlug}`);
+    }
   }
   // Resolve completed lesson slugs (CourseSidebar expects slugs, not UUIDs)
   let completedSlugs: string[] = [];

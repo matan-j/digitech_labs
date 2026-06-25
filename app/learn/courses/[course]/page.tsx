@@ -324,18 +324,16 @@ function LessonList({
     <ul className={compact ? 'rounded-md border border-neutral-100 overflow-hidden' : ''}>
       {lessons.map((l) => {
         const isDone = completed.has(l.id);
-        // Access hierarchy (matches the lesson page + decideAccess):
-        //   1. Course access (purchase / subscription / login) → everything open.
-        //   2. A manually unlocked lesson (is_preview) → open even without access.
-        //   3. Otherwise → locked.
-        // A structural HARD lock (module/chapter/this lesson, migration 029/031)
-        // always wins and is never lifted by preview.
-        const previewOpen = !!l.is_preview;
-        const structurallyLocked = hardLocked || !!l.is_locked;
-        const lessonLocked = structurallyLocked || (courseLocked && !previewOpen);
-        // Open to a non-buyer purely because it was manually unlocked — flag it so
-        // the visitor understands why this one lesson is reachable.
-        const freePreview = courseLocked && previewOpen && !structurallyLocked;
+        // Per-lesson lock model (matches the lesson page):
+        //   • A LOCKED lesson (itself, its chapter, or its module) requires the
+        //     course access (purchase / membership / login).
+        //   • An UNLOCKED lesson is FREE for everyone, including non-buyers.
+        // Buyers/members/admins (courseLocked=false) see everything open.
+        const requiresPurchase = hardLocked || !!l.is_locked;
+        const lessonLocked = courseLocked && requiresPurchase;
+        // A non-buyer can open this lesson for free because it isn't locked —
+        // flag it so the visitor understands why this one is reachable.
+        const freePreview = courseLocked && !requiresPurchase;
         // Locked lessons send the viewer back to the course header, where the
         // access-aware CTA (enroll / purchase / subscribe) lives.
         const url = lessonLocked ? `/learn/courses/${slug}` : `/learn/courses/${slug}/${l.slug}`;
