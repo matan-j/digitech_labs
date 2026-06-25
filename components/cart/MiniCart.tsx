@@ -104,13 +104,15 @@ export default function MiniCart() {
             type="button"
             aria-label="סגור"
             onClick={close}
-            className={`absolute inset-0 bg-brand-purple-950/60 backdrop-blur-sm transition-opacity duration-250 ${
+            className={`absolute inset-0 bg-brand-purple-950/60 backdrop-blur-sm transition-opacity duration-300 ${
               shown ? 'opacity-100' : 'opacity-0'
             }`}
           />
+          {/* Match the collapsed bar's footprint: centered, capped at max-w-3xl.
+              On phones (< 768px) this is effectively full width. */}
           <div
             dir="rtl"
-            className={`absolute inset-x-0 bottom-0 flex max-h-[92vh] flex-col rounded-t-3xl bg-white shadow-2xl transition-transform duration-300 ease-out ${
+            className={`absolute inset-x-0 bottom-0 mx-auto flex max-h-[92vh] w-full max-w-3xl flex-col rounded-t-3xl bg-white shadow-2xl transition-transform duration-300 ease-out ${
               shown ? 'translate-y-0' : 'translate-y-full'
             }`}
           >
