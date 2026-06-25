@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Compass, BookText, Lock, Play } from 'lucide-react';
-import { DOMAIN_BY_ID, domainBadgeClasses, type DomainId } from '@/lib/learn/domains';
+import { getDomainMeta, domainBadgeClasses, type DomainId, type DomainMeta } from '@/lib/learn/domains';
 import { youtubeIdFromUrl, youtubeThumbnailUrl } from '@/lib/learn/youtube';
 
 type Props = {
@@ -11,6 +11,8 @@ type Props = {
   coverUrl: string | null;
   videoUrl: string | null;
   domain: DomainId | null;
+  /** Resolved (dynamic) domain meta from the parent; falls back to the seed. */
+  domainMeta?: DomainMeta | null;
   locked?: boolean;
 };
 
@@ -22,12 +24,13 @@ export default function LearnCard({
   coverUrl,
   videoUrl,
   domain,
+  domainMeta: domainMetaProp,
   locked,
 }: Props) {
   const ytId = youtubeIdFromUrl(videoUrl);
   const cover = coverUrl || (ytId ? youtubeThumbnailUrl(ytId, 'hq') : null);
   const Icon = variant === 'guide' ? Compass : BookText;
-  const domainMeta = domain ? DOMAIN_BY_ID[domain] : null;
+  const domainMeta = domainMetaProp ?? getDomainMeta(domain);
 
   return (
     <Link
@@ -58,7 +61,7 @@ export default function LearnCard({
         )}
 
         {domainMeta && (
-          <div className={['absolute top-3 right-3 inline-flex items-center px-2 py-0.5 rounded-pill text-[10px] font-bold border', domainBadgeClasses(domain)].join(' ')}>
+          <div className={['absolute top-3 right-3 inline-flex items-center px-2 py-0.5 rounded-pill text-[10px] font-bold border', domainBadgeClasses(domainMeta.color)].join(' ')}>
             {domainMeta.label}
           </div>
         )}

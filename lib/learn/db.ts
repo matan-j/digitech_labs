@@ -21,7 +21,7 @@ import type {
   CreatorStats,
   Playlist,
 } from './types';
-import type { Category } from './domains';
+import { DOMAINS, type Category, type DomainColor, type DomainMeta } from './domains';
 
 // ============================================================
 // Reads — go through the request-scoped (RLS-aware) client
@@ -516,6 +516,58 @@ export async function listCategories(): Promise<Category[]> {
     .order('name', { ascending: true });
   if (error) throw error;
   return (data ?? []) as Category[];
+}
+
+// ----- Domains taxonomy (admin-managed, migration 039) -----
+
+/**
+ * All domains, ordered. Reads the admin-managed `domains` table and falls back
+ * to the seeded 6 (lib/learn/domains.ts DOMAINS) if the table doesn't exist yet
+ * or the query fails — so the app keeps working before migration 039 is applied.
+ */
+export async function listDomains(): Promise<DomainMeta[]> {
+  try {
+    const supabase = await db();
+    const { data, error } = await supabase
+      .from('domains')
+      .select('id, label, color, sort_order')
+      .order('sort_order', { ascending: true })
+      .order('label', { ascending: true });
+    if (error || !data || data.length === 0) {
+      if (error) console.error('[listDomains] falling back to seed:', error.message);
+      return [...DOMAINS];
+    }
+    return data.map((d) => ({
+      id: d.id as string,
+      label: d.label as string,
+      color: d.color as DomainColor,
+      sort_order: (d.sort_order as number) ?? 0,
+    }));
+  } catch (err) {
+    console.error('[listDomains] exception, falling back to seed:', err);
+    return [...DOMAINS];
+  }
+}
+
+/**
+ * How many rows reference a domain id across the taxonomy-bearing tables.
+ * Used to block deletion of an in-use domain. Service client → counts are
+ * RLS-independent. Best-effort; returns 0 on error.
+ */
+export async function countDomainUsage(domainId: string): Promise<number> {
+  try {
+    const supabase = createServiceClient();
+    const tables = ['content_items', 'playbooks', 'playlists', 'categories'] as const;
+    const results = await Promise.all(
+      tables.map((t) =>
+        supabase.from(t).select('*', { count: 'exact', head: true }).eq('domain', domainId),
+      ),
+    );
+    return results.reduce((sum, r) => sum + (r.count ?? 0), 0);
+  } catch (err) {
+    console.error('[countDomainUsage]', err);
+    return 0;
+  }
 }
 
 // ----- Progress (server-side replacement for localStorage) -----

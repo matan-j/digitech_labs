@@ -5,7 +5,8 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Trash2, ExternalLink, Pencil } from 'lucide-react';
 import type { Playbook } from '@/lib/learn/types';
-import { DOMAIN_BY_ID, domainBadgeClasses } from '@/lib/learn/domains';
+import { domainBadgeClasses } from '@/lib/learn/domains';
+import { useDomains } from '@/lib/learn/useDomains';
 
 const SOURCE_LABEL = {
   course: 'מקורס',
@@ -24,6 +25,7 @@ function formatDate(iso: string | null) {
 
 export default function PlaybookRow({ playbook }: { playbook: Playbook }) {
   const router = useRouter();
+  const { map: domainMap } = useDomains();
   const [busy, setBusy] = useState(false);
   const [, startTransition] = useTransition();
 
@@ -38,7 +40,7 @@ export default function PlaybookRow({ playbook }: { playbook: Playbook }) {
 
   const publicPath = playbook.slug ? `/learn/playbooks/${playbook.slug}` : `/learn/playbooks/${playbook.id}`;
   const editPath = `/admin/playbooks/${playbook.id}`;
-  const domainMeta = playbook.domain ? DOMAIN_BY_ID[playbook.domain] : null;
+  const domainMeta = playbook.domain ? domainMap.get(playbook.domain) ?? null : null;
 
   return (
     <tr className="border-t border-neutral-100 hover:bg-neutral-50">
@@ -55,7 +57,7 @@ export default function PlaybookRow({ playbook }: { playbook: Playbook }) {
       </td>
       <td className="px-4 py-3">
         {domainMeta ? (
-          <span className={['inline-block px-2 py-0.5 rounded-pill text-[11px] font-semibold border', domainBadgeClasses(playbook.domain)].join(' ')}>
+          <span className={['inline-block px-2 py-0.5 rounded-pill text-[11px] font-semibold border', domainBadgeClasses(domainMeta.color)].join(' ')}>
             {domainMeta.label}
           </span>
         ) : (

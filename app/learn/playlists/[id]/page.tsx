@@ -5,11 +5,12 @@ import {
   getPlaylistById,
   getPlaylistGuides,
   listFeaturedGuides,
+  listDomains,
 } from '@/lib/learn/db';
 import GuideCard from '@/components/learn/GuideCard';
 import GuideThumbnail from '@/components/learn/GuideThumbnail';
 import EmptyState from '@/components/learn/EmptyState';
-import { DOMAIN_BY_ID, domainBadgeClasses } from '@/lib/learn/domains';
+import { domainMapOf, domainBadgeClasses } from '@/lib/learn/domains';
 import { contentKindLabel } from '@/lib/learn/placeholder';
 
 export const dynamic = 'force-dynamic';
@@ -32,7 +33,8 @@ export default async function PlaylistPage({ params }: { params: Promise<{ id: s
 
   const guides = await getPlaylistGuides(id);
   const totalMinutes = guides.reduce((sum, g) => sum + (g.duration_minutes ?? 0), 0);
-  const domainMeta = playlist.domain ? DOMAIN_BY_ID[playlist.domain] : null;
+  const domainMap = domainMapOf(await listDomains());
+  const domainMeta = playlist.domain ? domainMap.get(playlist.domain) ?? null : null;
 
   // Recommended = featured guides not already in this playlist.
   const featured = await listFeaturedGuides(6);
@@ -67,7 +69,7 @@ export default async function PlaylistPage({ params }: { params: Promise<{ id: s
             <div className="flex items-center gap-2 mb-2">
               <span className="text-[11px] font-extrabold text-brand-purple-700 uppercase tracking-[0.18em]">פלייליסט</span>
               {domainMeta && (
-                <span className={['inline-flex items-center px-2 py-0.5 rounded-pill text-[10px] font-bold border', domainBadgeClasses(playlist.domain)].join(' ')}>
+                <span className={['inline-flex items-center px-2 py-0.5 rounded-pill text-[10px] font-bold border', domainBadgeClasses(domainMeta.color)].join(' ')}>
                   {domainMeta.label}
                 </span>
               )}

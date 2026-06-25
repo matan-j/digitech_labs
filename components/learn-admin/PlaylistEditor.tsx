@@ -6,7 +6,8 @@ import { Trash2, ArrowUp, ArrowDown, Plus, X } from 'lucide-react';
 import FileUpload from './FileUpload';
 import SaveIndicator, { type SaveState } from './SaveIndicator';
 import AccessControlFields from './AccessControlFields';
-import { DOMAINS, type DomainId, isDomainId } from '@/lib/learn/domains';
+import { type DomainId } from '@/lib/learn/domains';
+import { useDomains } from '@/lib/learn/useDomains';
 import type { Playlist, ContentItem, CatalogVisibility } from '@/lib/learn/types';
 
 type GuideOption = { id: string; title: string };
@@ -23,6 +24,7 @@ export default function PlaylistEditor({
   backHref?: string;
 }) {
   const router = useRouter();
+  const { domains } = useDomains();
   const [title, setTitle] = useState(initial.title);
   const [description, setDescription] = useState(initial.description ?? '');
   const [thumbnail, setThumbnail] = useState(initial.thumbnail_url ?? '');
@@ -145,11 +147,11 @@ export default function PlaylistEditor({
             <label className="block text-xs font-semibold text-neutral-600 mb-1.5">תחום</label>
             <select
               value={domain ?? ''}
-              onChange={(e) => { const v = e.target.value; setDomain(v === '' ? null : isDomainId(v) ? v : null); }}
+              onChange={(e) => { const v = e.target.value; setDomain(v === '' ? null : v); }}
               className={`${inputCls} bg-white`}
             >
               <option value="">— ללא תחום —</option>
-              {DOMAINS.map((d) => (<option key={d.id} value={d.id}>{d.label}</option>))}
+              {domains.map((d) => (<option key={d.id} value={d.id}>{d.label}</option>))}
             </select>
           </div>
           <div>

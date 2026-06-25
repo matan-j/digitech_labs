@@ -2,13 +2,15 @@ import Link from 'next/link';
 import { Clock } from 'lucide-react';
 import GuideThumbnail from './GuideThumbnail';
 import ShareButton from './ShareButton';
-import { DOMAIN_BY_ID, domainBadgeClasses } from '@/lib/learn/domains';
+import { getDomainMeta, domainBadgeClasses, type DomainMeta } from '@/lib/learn/domains';
 import { CONTENT_KIND_SHORT } from '@/lib/learn/placeholder';
 import type { ContentItem } from '@/lib/learn/types';
 
 /** A guide as it appears in hub/creator/playlist grids. */
-export default function GuideCard({ guide }: { guide: ContentItem }) {
-  const domainMeta = guide.domain ? DOMAIN_BY_ID[guide.domain] : null;
+export default function GuideCard({ guide, domainMeta: domainMetaProp }: { guide: ContentItem; domainMeta?: DomainMeta | null }) {
+  // Prefer the resolved (dynamic) meta from the parent; fall back to the static
+  // seed lookup so callers that don't pass it still render the built-in domains.
+  const domainMeta = domainMetaProp ?? getDomainMeta(guide.domain);
   const kind = guide.content_kind ?? 'article';
   const creator = guide.creator;
 
@@ -29,7 +31,7 @@ export default function GuideCard({ guide }: { guide: ContentItem }) {
           {CONTENT_KIND_SHORT[kind]}
         </span>
         {domainMeta && (
-          <span className={['absolute top-3 right-3 inline-flex items-center px-2 py-0.5 rounded-pill text-[10px] font-bold border', domainBadgeClasses(guide.domain)].join(' ')}>
+          <span className={['absolute top-3 right-3 inline-flex items-center px-2 py-0.5 rounded-pill text-[10px] font-bold border', domainBadgeClasses(domainMeta.color)].join(' ')}>
             {domainMeta.label}
           </span>
         )}

@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from 'react';
 import { Search, X } from 'lucide-react';
-import { DOMAINS, type DomainId, domainBadgeClasses, domainDotClasses } from '@/lib/learn/domains';
+import { type DomainId, domainBadgeClasses, domainDotClasses } from '@/lib/learn/domains';
+import { useDomains } from '@/lib/learn/useDomains';
 import LearnCard from './LearnCard';
 
 export type FilterableItem = {
@@ -23,6 +24,7 @@ type Props = {
 };
 
 export default function LearnFilters({ items, variant, emptyText = 'אין פריטים זמינים.' }: Props) {
+  const { domains, map: domainMap } = useDomains();
   const [activeDomain, setActiveDomain] = useState<DomainId | null>(null);
   const [search, setSearch] = useState('');
 
@@ -61,7 +63,7 @@ export default function LearnFilters({ items, variant, emptyText = 'אין פר�
             הכל
             <span className="text-[10px] opacity-80">({items.length})</span>
           </button>
-          {DOMAINS.map((d) => {
+          {domains.map((d) => {
             const count = counts.get(d.id) ?? 0;
             if (count === 0) return null;
             const active = activeDomain === d.id;
@@ -72,10 +74,10 @@ export default function LearnFilters({ items, variant, emptyText = 'אין פר�
                 onClick={() => setActiveDomain(active ? null : d.id)}
                 className={[
                   'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-pill text-xs font-semibold border transition-colors',
-                  active ? domainBadgeClasses(d.id) : 'bg-white text-neutral-700 border-neutral-200 hover:border-neutral-400',
+                  active ? domainBadgeClasses(d.color) : 'bg-white text-neutral-700 border-neutral-200 hover:border-neutral-400',
                 ].join(' ')}
               >
-                <span className={['w-1.5 h-1.5 rounded-pill', domainDotClasses(d.id)].join(' ')} aria-hidden />
+                <span className={['w-1.5 h-1.5 rounded-pill', domainDotClasses(d.color)].join(' ')} aria-hidden />
                 {d.label}
                 <span className="text-[10px] opacity-80">({count})</span>
               </button>
@@ -124,6 +126,7 @@ export default function LearnFilters({ items, variant, emptyText = 'אין פר�
               coverUrl={it.cover_url}
               videoUrl={it.video_url}
               domain={it.domain}
+              domainMeta={it.domain ? domainMap.get(it.domain) ?? null : null}
               locked={it.locked}
             />
           ))}

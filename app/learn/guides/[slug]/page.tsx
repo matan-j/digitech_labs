@@ -6,6 +6,7 @@ import {
   recordGuideView,
   getPlaylistsContainingGuide,
   listGuidesByCreator,
+  listDomains,
 } from '@/lib/learn/db';
 import { getCurrentUser, getMyCreator, hasPremiumAccess } from '@/lib/auth';
 import GuideBlocks from '@/components/learn/GuideBlocks';
@@ -14,7 +15,7 @@ import { toRichBlocks, extractToc } from '@/lib/learn/rich-content';
 import VimeoPlayer from '@/components/learn/VimeoPlayer';
 import GuideCard from '@/components/learn/GuideCard';
 import SocialLinks from '@/components/learn/SocialLinks';
-import { DOMAIN_BY_ID, domainBadgeClasses, domainDotClasses } from '@/lib/learn/domains';
+import { domainMapOf, domainBadgeClasses, domainDotClasses } from '@/lib/learn/domains';
 import { youtubeIdFromUrl, youtubeEmbedUrl } from '@/lib/learn/youtube';
 import { parseVimeoInput } from '@/lib/learn/vimeo';
 import { contentKindLabel } from '@/lib/learn/placeholder';
@@ -64,14 +65,16 @@ export default async function GuideReadPage({ params }: { params: Promise<{ slug
   // Record a view (best-effort, published only).
   if (isPublished) await recordGuideView(guide.id, auth?.userId ?? null);
 
-  const [playlists, creatorGuides] = await Promise.all([
+  const [playlists, creatorGuides, allDomains] = await Promise.all([
     getPlaylistsContainingGuide(guide.id),
     guide.creator_id ? listGuidesByCreator(guide.creator_id, true) : Promise.resolve([]),
+    listDomains(),
   ]);
   const related = creatorGuides.filter((g) => g.id !== guide.id).slice(0, 3);
 
   const kind = guide.content_kind ?? 'article';
-  const domainMeta = guide.domain ? DOMAIN_BY_ID[guide.domain] : null;
+  const domainMap = domainMapOf(allDomains);
+  const domainMeta = guide.domain ? domainMap.get(guide.domain) ?? null : null;
   const ytId = youtubeIdFromUrl(guide.content_url) ?? youtubeIdFromUrl(guide.video_url);
   const vimeo = guide.content_url ? parseVimeoInput(guide.content_url) : null;
 
@@ -128,8 +131,8 @@ export default async function GuideReadPage({ params }: { params: Promise<{ slug
             {contentKindLabel(guide.content_kind)}
           </span>
           {domainMeta && (
-            <span className={['inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill text-[11px] font-bold border', domainBadgeClasses(guide.domain)].join(' ')}>
-              <span className={['w-1.5 h-1.5 rounded-pill', domainDotClasses(guide.domain)].join(' ')} aria-hidden />
+            <span className={['inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill text-[11px] font-bold border', domainBadgeClasses(domainMeta.color)].join(' ')}>
+              <span className={['w-1.5 h-1.5 rounded-pill', domainDotClasses(domainMeta.color)].join(' ')} aria-hidden />
               {domainMeta.label}
             </span>
           )}
@@ -257,7 +260,7 @@ export default async function GuideReadPage({ params }: { params: Promise<{ slug
           <h2 className="text-lg font-extrabold text-neutral-950 mb-4">עוד מאותו יוצר</h2>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {related.map((g) => (
-              <GuideCard key={g.id} guide={g} />
+              <GuideCard key={g.id} guide={g} domainMeta={g.domain ? domainMap.get(g.domain) ?? null : null} />
             ))}
           </div>
         </div>

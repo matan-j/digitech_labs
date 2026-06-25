@@ -1,11 +1,11 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowRight, Lock } from 'lucide-react';
-import { getPlaybook, getPlaybookBySlug } from '@/lib/learn/db';
+import { getPlaybook, getPlaybookBySlug, listDomains } from '@/lib/learn/db';
 import { getCurrentUser, hasPremiumAccess } from '@/lib/auth';
 import { decideAccess, gateCtaLabel, type GateReason } from '@/lib/learn/access';
 import AccessActionButton from '@/components/learn/AccessActionButton';
-import { DOMAIN_BY_ID, domainBadgeClasses, domainDotClasses } from '@/lib/learn/domains';
+import { domainMapOf, domainBadgeClasses, domainDotClasses } from '@/lib/learn/domains';
 import { youtubeIdFromUrl, youtubeEmbedUrl } from '@/lib/learn/youtube';
 
 export const dynamic = 'force-dynamic';
@@ -45,7 +45,7 @@ export default async function PlaybookViewer({ params }: { params: Promise<{ id:
   const slugOrId = playbook.slug ?? playbook.id;
 
   const ytId = youtubeIdFromUrl(playbook.video_url);
-  const domainMeta = playbook.domain ? DOMAIN_BY_ID[playbook.domain] : null;
+  const domainMeta = playbook.domain ? domainMapOf(await listDomains()).get(playbook.domain) ?? null : null;
   const cover = playbook.cover_url;
   const hasHtml = !!playbook.html_content && playbook.html_content.trim().length > 0;
   // Auto-generated playbooks (no video, no cover, no description, no slug) — keep
@@ -93,8 +93,8 @@ export default async function PlaybookViewer({ params }: { params: Promise<{ id:
 
           <div className="flex flex-wrap items-center gap-2 mb-3">
             {domainMeta && (
-              <span className={['inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill text-[11px] font-bold border', domainBadgeClasses(playbook.domain)].join(' ')}>
-                <span className={['w-1.5 h-1.5 rounded-pill', domainDotClasses(playbook.domain)].join(' ')} aria-hidden />
+              <span className={['inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill text-[11px] font-bold border', domainBadgeClasses(domainMeta.color)].join(' ')}>
+                <span className={['w-1.5 h-1.5 rounded-pill', domainDotClasses(domainMeta.color)].join(' ')} aria-hidden />
                 {domainMeta.label}
               </span>
             )}

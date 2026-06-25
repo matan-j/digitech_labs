@@ -5,8 +5,9 @@ import {
   listGuidesByCreator,
   listPlaylistsByCreator,
   getPlaylistItemCounts,
+  listDomains,
 } from '@/lib/learn/db';
-import { getDomainMeta } from '@/lib/learn/domains';
+import { domainMapOf } from '@/lib/learn/domains';
 import { youtubeIdFromUrl, youtubeEmbedUrl } from '@/lib/learn/youtube';
 import { parseVimeoInput } from '@/lib/learn/vimeo';
 import CreatorProfileView, { type IntroVideo, type ProfileTopic } from '@/components/creator/CreatorProfileView';
@@ -39,17 +40,19 @@ export default async function CreatorPublicPage({ params }: { params: Promise<{ 
   const creator = await getCreatorBySlug(slug);
   if (!creator) notFound();
 
-  const [stats, guides, playlists] = await Promise.all([
+  const [stats, guides, playlists, allDomains] = await Promise.all([
     getCreatorStats(creator.id, true),
     listGuidesByCreator(creator.id, true),
     listPlaylistsByCreator(creator.id, true),
+    listDomains(),
   ]);
   const playlistCounts = await getPlaylistItemCounts(playlists.map((p) => p.id));
 
   // Topics derived from the domains of the creator's guides + playlists.
+  const domainMap = domainMapOf(allDomains);
   const topicMap = new Map<string, ProfileTopic>();
   for (const d of [...guides.map((g) => g.domain), ...playlists.map((p) => p.domain)]) {
-    const meta = getDomainMeta(d);
+    const meta = d ? domainMap.get(d) : null;
     if (meta && !topicMap.has(meta.id)) topicMap.set(meta.id, { id: meta.id, label: meta.label });
   }
   const topics = Array.from(topicMap.values());

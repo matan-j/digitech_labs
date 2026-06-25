@@ -7,13 +7,15 @@ import FileUpload from './FileUpload';
 import SaveIndicator, { type SaveState } from './SaveIndicator';
 import YouTubeField from './YouTubeField';
 import AccessControlFields from './AccessControlFields';
-import { DOMAINS, type DomainId, isDomainId } from '@/lib/learn/domains';
+import { type DomainId } from '@/lib/learn/domains';
+import { useDomains } from '@/lib/learn/useDomains';
 import type { AccessLevel, CatalogVisibility, Playbook } from '@/lib/learn/types';
 
 type Props = { initial: Playbook };
 
 export default function PlaybookEditor({ initial }: Props) {
   const router = useRouter();
+  const { domains } = useDomains();
   const [title, setTitle] = useState(initial.title);
   const [tagline, setTagline] = useState(initial.tagline ?? '');
   const [description, setDescription] = useState(initial.description ?? '');
@@ -220,13 +222,12 @@ export default function PlaybookEditor({ initial }: Props) {
             value={domain ?? ''}
             onChange={(e) => {
               const v = e.target.value;
-              if (v === '') setDomain(null);
-              else if (isDomainId(v)) setDomain(v);
+              setDomain(v === '' ? null : v);
             }}
             className="w-full sm:max-w-xs px-3 py-2 rounded-md border border-neutral-200 focus:border-brand-purple-400 focus:outline-none text-sm bg-white"
           >
             <option value="">— ללא תחום —</option>
-            {DOMAINS.map((d) => (
+            {domains.map((d) => (
               <option key={d.id} value={d.id}>{d.label}</option>
             ))}
           </select>

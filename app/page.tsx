@@ -10,6 +10,7 @@ import {
   listFeaturedPlaylists,
   listPlaylists,
   getPlaylistItemCounts,
+  listDomains,
 } from '@/lib/learn/db';
 import { isPubliclyListed, resolveAccessLevel, resolveDisplayPrice } from '@/lib/learn/access';
 import { listOwnedResourceIds } from '@/lib/payments/entitlement-service';
@@ -23,7 +24,7 @@ import CreatorPills from '@/components/learn/CreatorPills';
 import InlineRich from '@/components/learn/InlineRich';
 import MarketingHeader from '@/components/marketing/MarketingHeader';
 import MarketingFooter from '@/components/marketing/MarketingFooter';
-import { DOMAIN_BY_ID } from '@/lib/learn/domains';
+import { domainMapOf } from '@/lib/learn/domains';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,7 +40,7 @@ function take<T>(arr: T[], limit?: number | null): T[] {
 }
 
 export default async function HomePage() {
-  const [auth, brand, sections, coursesRaw, featuredGuides, activeCreators, featuredPlaylists, ownedIds] =
+  const [auth, brand, sections, coursesRaw, featuredGuides, activeCreators, featuredPlaylists, ownedIds, allDomains] =
     await Promise.all([
       getCurrentUser(),
       getBrandSettings(),
@@ -49,8 +50,10 @@ export default async function HomePage() {
       listCreators({ activeOnly: true }),
       listFeaturedPlaylists(FETCH_CAP),
       listOwnedResourceIds('course'),
+      listDomains(),
     ]);
   const canSeePremium = auth ? hasPremiumAccess(auth.profile) : false;
+  const domainMap = domainMapOf(allDomains);
 
   const active = sections.filter((s) => s.enabled);
   const needs = (type: HomepageSection['type']) => active.some((s) => s.type === type);
@@ -130,7 +133,7 @@ export default async function HomePage() {
           <Section key={s.key} title={s.title || 'קורסים נבחרים'} href={s.cta_href || '/learn/courses'} cta={s.cta_label || 'כל הקורסים'}>
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {items.map((c) => {
-                const domain = c.domain ? DOMAIN_BY_ID[c.domain] : null;
+                const domain = c.domain ? domainMap.get(c.domain) ?? null : null;
                 const level = resolveAccessLevel(c);
                 const isPaid = level === 'purchase_required';
                 const dp = isPaid ? resolveDisplayPrice(c) : null;

@@ -1,11 +1,11 @@
 import Link from 'next/link';
 import { ListVideo, PlaySquare } from 'lucide-react';
-import { DOMAIN_BY_ID, domainBadgeClasses } from '@/lib/learn/domains';
+import { getDomainMeta, domainBadgeClasses, type DomainMeta } from '@/lib/learn/domains';
 import type { Playlist } from '@/lib/learn/types';
 
 /** Playlist card: thumbnail, title, creator, guide count. */
-export default function PlaylistCard({ playlist, count }: { playlist: Playlist; count: number }) {
-  const domainMeta = playlist.domain ? DOMAIN_BY_ID[playlist.domain] : null;
+export default function PlaylistCard({ playlist, count, domainMeta: domainMetaProp }: { playlist: Playlist; count: number; domainMeta?: DomainMeta | null }) {
+  const domainMeta = domainMetaProp ?? getDomainMeta(playlist.domain);
   const cover = playlist.thumbnail_url;
 
   return (
@@ -31,7 +31,7 @@ export default function PlaylistCard({ playlist, count }: { playlist: Playlist; 
           {count} הדרכות
         </span>
         {domainMeta && (
-          <span className={['absolute top-3 right-3 inline-flex items-center px-2 py-0.5 rounded-pill text-[10px] font-bold border', domainBadgeClasses(playlist.domain)].join(' ')}>
+          <span className={['absolute top-3 right-3 inline-flex items-center px-2 py-0.5 rounded-pill text-[10px] font-bold border', domainBadgeClasses(domainMeta.color)].join(' ')}>
             {domainMeta.label}
           </span>
         )}

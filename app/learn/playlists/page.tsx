@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { ListVideo, Layers } from 'lucide-react';
-import { listPlaylists, getPlaylistItemCounts } from '@/lib/learn/db';
-import { DOMAIN_BY_ID } from '@/lib/learn/domains';
+import { listPlaylists, getPlaylistItemCounts, listDomains } from '@/lib/learn/db';
+import { domainMapOf } from '@/lib/learn/domains';
 import EmptyState from '@/components/learn/EmptyState';
 
 export const dynamic = 'force-dynamic';
@@ -14,6 +14,7 @@ export const metadata = {
 export default async function PlaylistsIndexPage() {
   const playlists = await listPlaylists({ publishedOnly: true });
   const counts = await getPlaylistItemCounts(playlists.map((p) => p.id));
+  const domainMap = domainMapOf(await listDomains());
 
   return (
     <div className="px-4 sm:px-6 lg:px-10 py-8 max-w-6xl mx-auto">
@@ -35,7 +36,7 @@ export default async function PlaylistsIndexPage() {
       ) : (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {playlists.map((p) => {
-            const domain = p.domain ? DOMAIN_BY_ID[p.domain] : null;
+            const domain = p.domain ? domainMap.get(p.domain) ?? null : null;
             const count = counts[p.id] ?? 0;
             return (
               <div

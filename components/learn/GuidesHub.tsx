@@ -7,7 +7,8 @@ import GuideCard from './GuideCard';
 import CreatorCard from './CreatorCard';
 import PlaylistCard from './PlaylistCard';
 import EmptyState from './EmptyState';
-import { DOMAINS, type DomainId, domainBadgeClasses, domainDotClasses } from '@/lib/learn/domains';
+import { type DomainId, domainBadgeClasses, domainDotClasses } from '@/lib/learn/domains';
+import { useDomains } from '@/lib/learn/useDomains';
 import type { ContentItem, Creator, Playlist } from '@/lib/learn/types';
 
 export type HubCreator = { creator: Creator; guides: number; playlists: number };
@@ -46,6 +47,7 @@ function SectionHeader({
 }
 
 export default function GuidesHub({ featuredGuides, creators, playlists, guides }: Props) {
+  const { domains, map: domainMap } = useDomains();
   const [query, setQuery] = useState('');
   const [activeDomain, setActiveDomain] = useState<DomainId | null>(null);
 
@@ -115,7 +117,7 @@ export default function GuidesHub({ featuredGuides, creators, playlists, guides 
             >
               הכל
             </button>
-            {DOMAINS.map((d) => {
+            {domains.map((d) => {
               const count = domainCounts.get(d.id) ?? 0;
               if (count === 0) return null;
               const active = activeDomain === d.id;
@@ -126,10 +128,10 @@ export default function GuidesHub({ featuredGuides, creators, playlists, guides 
                   onClick={() => setActiveDomain((prev) => (prev === d.id ? null : d.id))}
                   className={[
                     'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-pill text-xs font-semibold border transition-colors',
-                    active ? domainBadgeClasses(d.id) : 'bg-white text-neutral-600 border-neutral-300 hover:border-brand-purple-400',
+                    active ? domainBadgeClasses(d.color) : 'bg-white text-neutral-600 border-neutral-300 hover:border-brand-purple-400',
                   ].join(' ')}
                 >
-                  <span className={['w-1.5 h-1.5 rounded-pill', domainDotClasses(d.id)].join(' ')} aria-hidden />
+                  <span className={['w-1.5 h-1.5 rounded-pill', domainDotClasses(d.color)].join(' ')} aria-hidden />
                   {d.label}
                   <span className="text-[10px] opacity-80">({count})</span>
                 </button>
@@ -151,7 +153,7 @@ export default function GuidesHub({ featuredGuides, creators, playlists, guides 
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {filtered.map((g) => (
-                <GuideCard key={g.id} guide={g} />
+                <GuideCard key={g.id} guide={g} domainMeta={g.domain ? domainMap.get(g.domain) ?? null : null} />
               ))}
             </div>
           )}
@@ -164,7 +166,7 @@ export default function GuidesHub({ featuredGuides, creators, playlists, guides 
               <SectionHeader icon={Sparkles} title="הדרכות מומלצות" />
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {featuredGuides.map((g) => (
-                  <GuideCard key={g.id} guide={g} />
+                  <GuideCard key={g.id} guide={g} domainMeta={g.domain ? domainMap.get(g.domain) ?? null : null} />
                 ))}
               </div>
             </section>
@@ -206,7 +208,7 @@ export default function GuidesHub({ featuredGuides, creators, playlists, guides 
             ) : (
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {guides.map((g) => (
-                  <GuideCard key={g.id} guide={g} />
+                  <GuideCard key={g.id} guide={g} domainMeta={g.domain ? domainMap.get(g.domain) ?? null : null} />
                 ))}
               </div>
             )}
