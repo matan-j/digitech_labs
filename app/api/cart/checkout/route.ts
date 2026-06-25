@@ -44,6 +44,44 @@ import { ensureSquareCoverUrl } from '@/lib/images/square-cover';
 
 export const runtime = 'nodejs';
 
+function round2(n: number): number {
+  return Math.round(n * 100) / 100;
+}
+
+/**
+ * Per-line coupon discount (content_id → ILS off that line) so each product's
+ * webhook price_after_discount can reflect the coupon too — keeping the payload
+ * STRUCTURE identical, only the values change, and Σ(price_after_discount) equals
+ * the charged `amount`.
+ *   - 'specific' coupon → use the validator's per-line breakdown as-is.
+ *   - 'all' coupon → spread the cart-wide discount proportionally to each line's
+ *     price_after; the last line absorbs the rounding remainder so the sum is exact.
+ */
+function couponLineDiscounts(
+  items: { content_id: string; price_after: number }[],
+  detail: { applies_to: 'all' | 'specific'; line_discounts: Record<string, number> } | null,
+  totalDiscount: number,
+): Record<string, number> {
+  if (!detail || totalDiscount <= 0) return {};
+  if (detail.applies_to === 'specific') return detail.line_discounts;
+
+  const eligible = items.filter((i) => i.price_after > 0);
+  const base = eligible.reduce((s, i) => s + i.price_after, 0);
+  if (base <= 0) return {};
+  const out: Record<string, number> = {};
+  let allocated = 0;
+  eligible.forEach((i, idx) => {
+    const raw =
+      idx === eligible.length - 1
+        ? round2(totalDiscount - allocated)
+        : round2((totalDiscount * i.price_after) / base);
+    const d = Math.max(0, Math.min(raw, i.price_after));
+    out[i.content_id] = d;
+    allocated = round2(allocated + d);
+  });
+  return out;
+}
+
 export async function POST(request: Request) {
   const auth = await getCurrentUser();
   if (!auth) return NextResponse.json({ error: 'unauthenticated' }, { status: 401 });
@@ -60,6 +98,7 @@ export async function POST(request: Request) {
   // yields the coupon_id we snapshot on the order and the exact amount to charge.
   // The coupon ONLY lowers the amount — the webhook payload shape is unchanged.
   let coupon: { id: string; code: string; discount: number } | null = null;
+  let couponDetail: { applies_to: 'all' | 'specific'; line_discounts: Record<string, number> } | null = null;
   let payable = cart.total_after;
   if (cart.coupon) {
     const res = await validateCoupon(
@@ -69,6 +108,7 @@ export async function POST(request: Request) {
     );
     if (res.ok) {
       coupon = { id: res.coupon_id, code: res.code, discount: res.discount };
+      couponDetail = { applies_to: res.applies_to, line_discounts: res.line_discounts };
       payable = res.total_after_coupon;
     } else {
       await clearCartCoupon(auth.userId); // went stale between cart load + checkout
@@ -175,13 +215,22 @@ export async function POST(request: Request) {
     })),
   );
 
+  // Distribute the coupon across lines so each product's price_after_discount is
+  // the real post-coupon price (Σ == payable). Webhook structure is unchanged.
+  const lineCoupon = couponLineDiscounts(
+    cart.items.map((i) => ({ content_id: i.content_id, price_after: i.price_after })),
+    couponDetail,
+    coupon?.discount ?? 0,
+  );
+
   // Resolve a pre-cropped 1:1 cover per line (cached on the item; lazily generated
   // + stored on first use). Falls back to the original cover, never to empty.
   const products = await Promise.all(
     cart.items.map(async (i) => ({
       product_name: i.title,
       price_before_discount: i.price_before,
-      price_after_discount: i.price_after,
+      // Effective per-line price after the item sale AND the coupon's share.
+      price_after_discount: Math.max(0, round2(i.price_after - (lineCoupon[i.content_id] ?? 0))),
       image_url:
         (await ensureSquareCoverUrl({
           id: i.content_id,
