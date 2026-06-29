@@ -23,6 +23,11 @@ import type {
 } from './types';
 import { DOMAINS, type Category, type DomainColor, type DomainMeta } from './domains';
 import type { Popup, PublicPopup } from './popups';
+import type {
+  RegistrationRule,
+  RegistrationRuleGrant,
+  RegistrationRuleWithGrants,
+} from './registration-rules';
 
 // ============================================================
 // Reads — go through the request-scoped (RLS-aware) client
@@ -1029,6 +1034,48 @@ export async function getActivePopupsForPath(
       .map(({ ...p }) => p as PublicPopup);
   } catch (err) {
     console.error('[getActivePopupsForPath] exception:', err);
+    return [];
+  }
+}
+
+// ============================================================
+// Registration rules (admin-managed cohort auto-grant — migration 044)
+// ============================================================
+
+/**
+ * All registration rules with their grants, newest first. Admin only (the
+ * service client bypasses RLS). Returns [] on error so the admin page renders.
+ */
+export async function listRegistrationRules(): Promise<RegistrationRuleWithGrants[]> {
+  try {
+    const supabase = createServiceClient();
+    const [{ data: rules, error: rulesErr }, { data: grants, error: grantsErr }] =
+      await Promise.all([
+        supabase
+          .from('registration_rules')
+          .select('*')
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('registration_rule_grants')
+          .select('*')
+          .order('position', { ascending: true }),
+      ]);
+    if (rulesErr || grantsErr) {
+      console.error('[listRegistrationRules]', rulesErr?.message ?? grantsErr?.message);
+      return [];
+    }
+    const byRule = new Map<string, RegistrationRuleGrant[]>();
+    for (const g of (grants ?? []) as RegistrationRuleGrant[]) {
+      const arr = byRule.get(g.rule_id) ?? [];
+      arr.push(g);
+      byRule.set(g.rule_id, arr);
+    }
+    return ((rules ?? []) as RegistrationRule[]).map((r) => ({
+      ...r,
+      grants: byRule.get(r.id) ?? [],
+    }));
+  } catch (err) {
+    console.error('[listRegistrationRules] exception:', err);
     return [];
   }
 }

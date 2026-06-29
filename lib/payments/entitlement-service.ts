@@ -19,7 +19,7 @@ export async function grantEntitlement(params: {
   resourceId: string;
   /** Omit for free grants and manual admin grants (no order). */
   orderId?: string | null;
-  source?: 'purchase' | 'admin' | 'gift';
+  source?: 'purchase' | 'admin' | 'gift' | 'registration_rule';
   expiresAt?: string | null;
 }): Promise<void> {
   const supabase = createServiceClient();
@@ -61,7 +61,7 @@ export async function grantPurchaseAccess(params: {
   resourceType: ResourceType;
   resourceId: string;
   orderId?: string | null;
-  source?: 'purchase' | 'admin' | 'gift';
+  source?: 'purchase' | 'admin' | 'gift' | 'registration_rule';
 }): Promise<void> {
   await grantEntitlement(params);
   if (params.resourceType !== 'bundle') return;
