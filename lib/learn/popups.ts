@@ -16,6 +16,8 @@ export type Popup = {
   image_link_new_tab: boolean;
   /** When true, clicking the image opens the registration/login modal (ignores image_link). */
   image_link_auth: boolean;
+  /** When true, the registration form is docked directly beneath the image (no click needed). */
+  image_signup_form: boolean;
   html: string | null;
   iframe_url: string | null;
   video_url: string | null;
@@ -51,6 +53,7 @@ export type PublicPopup = Pick<
   | 'image_link'
   | 'image_link_new_tab'
   | 'image_link_auth'
+  | 'image_signup_form'
   | 'html'
   | 'iframe_url'
   | 'video_url'
@@ -88,6 +91,7 @@ export const NEW_POPUP_DEFAULTS = {
   image_link: null,
   image_link_new_tab: true,
   image_link_auth: false,
+  image_signup_form: false,
   html: null,
   iframe_url: null,
   video_url: null,

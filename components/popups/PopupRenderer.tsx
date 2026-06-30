@@ -119,6 +119,12 @@ export default function PopupRenderer() {
         }
       : undefined;
 
+  // Inline registration form (docked under the image) — logged-out visitors only.
+  const signupRequest =
+    active?.image_signup_form && authed === false
+      ? { action: 'popup_form', returnTo: pathname }
+      : undefined;
+
   return (
     <>
       {active && (
@@ -126,6 +132,7 @@ export default function PopupRenderer() {
           popup={active}
           onClose={() => setActive(null)}
           onAuthAction={onAuthAction}
+          signupRequest={signupRequest}
         />
       )}
       <AccessModal

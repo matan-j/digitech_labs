@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { popupVideoEmbed, type PopupContentType } from '@/lib/learn/popups';
+import AccessForm, { type AccessRequest } from '@/components/auth/AccessForm';
 
 /** The content fields PopupContent / PopupModal need to render. */
 export type PopupViewData = {
@@ -11,6 +12,7 @@ export type PopupViewData = {
   image_link: string | null;
   image_link_new_tab: boolean;
   image_link_auth: boolean;
+  image_signup_form: boolean;
   html: string | null;
   iframe_url: string | null;
   video_url: string | null;
@@ -26,13 +28,19 @@ export type PopupViewData = {
  * URL (the host opens the registration/login modal). The host passes it only
  * for logged-out visitors, so a logged-in user gets a plain, non-clickable
  * image. It is undefined in the admin preview.
+ *
+ * `signupRequest` — when provided AND the popup is configured with
+ * `image_signup_form`, the registration form is docked directly beneath the
+ * image (no click needed). The host passes it only for logged-out visitors.
  */
 export function PopupContent({
   popup,
   onAuthAction,
+  signupRequest,
 }: {
   popup: PopupViewData;
   onAuthAction?: () => void;
+  signupRequest?: AccessRequest;
 }) {
   switch (popup.content_type) {
     case 'image': {
@@ -41,6 +49,17 @@ export function PopupContent({
       }
       // eslint-disable-next-line @next/next/no-img-element
       const img = <img src={popup.image_url} alt="" className="block w-full h-auto" />;
+      // Inline registration form docked beneath the image — highest precedence.
+      if (popup.image_signup_form && signupRequest) {
+        return (
+          <div className="block">
+            {img}
+            <div className="border-t border-neutral-100 p-6 sm:p-7">
+              <AccessForm request={signupRequest} />
+            </div>
+          </div>
+        );
+      }
       // Auth action takes precedence over a plain URL link.
       if (popup.image_link_auth && onAuthAction) {
         return (
@@ -118,12 +137,15 @@ export function PopupModal({
   popup,
   onClose,
   onAuthAction,
+  signupRequest,
   embedded = false,
 }: {
   popup: PopupViewData;
   onClose: () => void;
   /** Fired when a logged-out visitor clicks an `image_link_auth` image. */
   onAuthAction?: () => void;
+  /** Request for the inline registration form (`image_signup_form`). */
+  signupRequest?: AccessRequest;
   /** When true, renders absolutely within its parent (admin preview) instead of fixed full-screen. */
   embedded?: boolean;
 }) {
@@ -186,7 +208,7 @@ export function PopupModal({
         >
           <X className="w-5 h-5" />
         </button>
-        <PopupContent popup={popup} onAuthAction={onAuthAction} />
+        <PopupContent popup={popup} onAuthAction={onAuthAction} signupRequest={signupRequest} />
       </div>
     </div>
   );

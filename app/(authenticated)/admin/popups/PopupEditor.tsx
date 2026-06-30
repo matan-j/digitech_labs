@@ -184,12 +184,16 @@ export default function PopupEditor({
                 <div>
                   <label className={labelCls}>פעולה בלחיצה על התמונה</label>
 
-                  <label className="flex items-start gap-2.5 text-sm text-neutral-700 mb-3">
+                  <label className="flex items-start gap-2.5 text-sm text-neutral-700 mb-2.5">
                     <input
                       type="checkbox"
                       className="mt-0.5"
                       checked={d.image_link_auth}
-                      onChange={(e) => set('image_link_auth', e.target.checked)}
+                      onChange={(e) => {
+                        const v = e.target.checked;
+                        set('image_link_auth', v);
+                        if (v) set('image_signup_form', false);
+                      }}
                     />
                     <span>
                       פתח חלון הרשמה / התחברות בלחיצה
@@ -199,15 +203,34 @@ export default function PopupEditor({
                     </span>
                   </label>
 
+                  <label className="flex items-start gap-2.5 text-sm text-neutral-700 mb-3">
+                    <input
+                      type="checkbox"
+                      className="mt-0.5"
+                      checked={d.image_signup_form}
+                      onChange={(e) => {
+                        const v = e.target.checked;
+                        set('image_signup_form', v);
+                        if (v) set('image_link_auth', false);
+                      }}
+                    />
+                    <span>
+                      הצג טופס הרשמה צמוד מתחת לתמונה
+                      <span className="block text-xs text-neutral-400">
+                        הטופס מופיע ישירות מתחת לתמונה (כמו פופאפ הרשמה עם תמונה למעלה) — בלי ללחוץ. מוצג רק למשתמשים שאינם מחוברים.
+                      </span>
+                    </span>
+                  </label>
+
                   <input
-                    className={`${inputCls} ${d.image_link_auth ? 'opacity-50' : ''}`}
+                    className={`${inputCls} ${d.image_link_auth || d.image_signup_form ? 'opacity-50' : ''}`}
                     value={d.image_link ?? ''}
                     onChange={(e) => set('image_link', e.target.value || null)}
                     placeholder="קישור בלחיצה (אופציונלי) — https://..."
                     dir="ltr"
-                    disabled={d.image_link_auth}
+                    disabled={d.image_link_auth || d.image_signup_form}
                   />
-                  {d.image_link && !d.image_link_auth && (
+                  {d.image_link && !d.image_link_auth && !d.image_signup_form && (
                     <label className="flex items-center gap-2 mt-2 text-sm text-neutral-600">
                       <input
                         type="checkbox"
@@ -426,7 +449,13 @@ export default function PopupEditor({
         </button>
       </div>
 
-      {preview && <PopupModal popup={d} onClose={() => setPreview(false)} />}
+      {preview && (
+        <PopupModal
+          popup={d}
+          onClose={() => setPreview(false)}
+          signupRequest={{ action: 'popup_form_preview', returnTo: '/' }}
+        />
+      )}
     </div>
   );
 }
